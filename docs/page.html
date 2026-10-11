@@ -144,7 +144,7 @@ details > div { padding-bottom: 12px; }
 <div class="wrap">
 <header class="top">
   <div class="row">
-    <div class="eyebrow">Tài liệu hướng dẫn · năm lệnh trong Claude Code</div>
+    <div class="eyebrow">Tài liệu hướng dẫn · sáu lệnh trong Claude Code</div>
     <button class="btn theme" id="themeBtn" type="button" aria-label="Đổi giao diện sáng tối">Sáng / Tối</button>
   </div>
   <h1>Bộ công cụ Short Video</h1>
@@ -159,6 +159,7 @@ details > div { padding-bottom: 12px; }
   <button role="tab" id="t-auto-subtitle" aria-selected="false" data-tab="auto-subtitle">/auto-subtitle</button>
   <button role="tab" id="t-news-video" aria-selected="false" data-tab="news-video">/news-video</button>
   <button role="tab" id="t-clip-video" aria-selected="false" data-tab="clip-video">/clip-video</button>
+  <button role="tab" id="t-dub-video" aria-selected="false" data-tab="dub-video">/dub-video</button>
   <button role="tab" id="t-he-thong" aria-selected="false" data-tab="he-thong">Thư mục &amp; yêu cầu</button>
 </nav>
 
@@ -172,6 +173,7 @@ details > div { padding-bottom: 12px; }
     <button class="card click" data-go="auto-subtitle"><span class="cmd">/auto-subtitle</span><h3>Phụ đề tự động</h3><p class="small muted">Nghe video, chép lời tiếng Việt hoặc Anh, soát lỗi, dịch nếu cần, gắn phụ đề karaoke.</p><span class="badge">Whisper medium</span></button>
     <button class="card click" data-go="news-video"><span class="cmd">/news-video</span><h3>Short từ link bài báo</h3><p class="small muted">Dán một hoặc nhiều link báo. Mỗi bài thành một video: tiêu đề ở đầu khung, ảnh chụp bài báo, hình minh họa, giọng đọc tóm tắt, chân trang ghi nguồn.</p><span class="badge">Làm hàng loạt</span></button>
     <button class="card click" data-go="clip-video"><span class="cmd">/clip-video</span><h3>Cắt short từ video dài</h3><p class="small muted">Dán link YouTube, Drive hoặc đường dẫn file. Claude đọc bản chép lời, đề xuất thông điệp chính, bạn chọn clip nào làm.</p><span class="badge">Video ngang 15–30 phút</span></button>
+    <button class="card click" data-go="dub-video"><span class="cmd">/dub-video</span><h3>Lồng tiếng Anh ⇄ Việt</h3><p class="small muted">Video tiếng Anh sang giọng đọc tiếng Việt, hoặc tiếng Việt sang giọng đọc tiếng Anh. Nguồn là file, link YouTube hoặc Google Drive. Giọng lồng khớp thời gian câu gốc, âm gốc hạ nhỏ bên dưới.</p></button>
   </div>
 
   <h2 style="margin-top:32px">Chúng nối với nhau thế nào</h2>
@@ -540,6 +542,55 @@ python clip_video.py render ten-ngan --clips 1,3,5 --title-seconds 4</pre><butto
   <div class="note">Claude chọn clip dựa vào <b>lời nói</b> (bản chép lời) và vài khung hình mẫu, không xem liên tục cả video, nên đoạn hay nhờ hình ảnh hoặc cử chỉ có thể bị bỏ sót. Nhận dạng 30 phút video mất khoảng 20–45 phút trên CPU. Tải từ YouTube và Drive phụ thuộc vào chia sẻ và chính sách của dịch vụ; nếu lỗi thì tải về rồi đưa đường dẫn file. Chỉ dùng với video của bạn hoặc video bạn có quyền dùng lại.</div>
 </section>
 
+<!-- ============ DUB-VIDEO ============ -->
+<section class="panel" id="p-dub-video" role="tabpanel" aria-labelledby="t-dub-video" hidden>
+  <h2>/dub-video: lồng tiếng Anh sang Việt hoặc Việt sang Anh</h2>
+  <p>Đưa vào một video có tiếng nói (file trên máy, link YouTube hoặc link Google Drive). Script chép lời, Claude dịch để đọc thành tiếng, rồi mỗi câu được đọc lại bằng giọng lồng đúng chỗ của câu gốc. Âm gốc hạ nhỏ bên dưới nên vẫn còn nhạc và tiếng môi trường.</p>
+
+  <div class="flow">
+    <div class="step"><b>1. Chuẩn bị</b><span class="small muted">tải, chép lời, chia đơn vị</span></div><span class="arrow">→</span>
+    <div class="step"><b>2. Dịch</b><span class="small muted">Claude dịch trong ngân sách từ</span></div><span class="arrow">→</span>
+    <div class="step"><b>3. Bạn duyệt</b><span class="small muted">xem dòng mẫu, sửa nếu cần</span></div><span class="arrow">→</span>
+    <div class="step"><b>4. Dựng</b><span class="small muted">giọng, khớp giờ, trộn âm</span></div>
+  </div>
+
+  <div class="builder" id="dvBuilder">
+    <div class="fields">
+      <label class="f" style="grid-column: 1 / -1">Nguồn video <small>file trên máy, link YouTube hoặc link Google Drive (chia sẻ "Anyone with the link")</small><input type="text" id="dvSrc" value="https://www.youtube.com/watch?v=..."></label>
+      <div class="f">Ngôn ngữ giọng lồng <small>--to</small>
+        <div class="seg"><label><input type="radio" name="dvTo" value="" checked>Tự đảo (Anh ⇄ Việt)</label><label><input type="radio" name="dvTo" value="vi">Tiếng Việt</label><label><input type="radio" name="dvTo" value="en">Tiếng Anh</label></div></div>
+      <div class="f">Giọng <small>--voice</small>
+        <div class="seg"><label><input type="radio" name="dvVoice" value="female" checked>Nữ</label><label><input type="radio" name="dvVoice" value="male">Nam</label><label><input type="radio" name="dvVoice" value="male-mature">Nam trung niên</label></div></div>
+      <div class="f">Phụ đề karaoke <small>--subs</small>
+        <div class="seg"><label><input type="radio" name="dvSubs" value="" checked>Không (giữ nguyên hình)</label><label><input type="radio" name="dvSubs" value="1">Có (dựng lại hình)</label></div></div>
+      <div class="f">Âm gốc dưới giọng lồng <small>--bg</small>
+        <div class="seg"><label><input type="radio" name="dvBg" value="" checked>Nhỏ (12%)</label><label><input type="radio" name="dvBg" value="0">Tắt hẳn</label></div></div>
+    </div>
+    <div class="outs">
+      <div class="codebox"><span class="label">Gõ trong Claude Code</span><pre class="code" id="dvCmd"></pre><button class="copy" type="button" data-copy="dvCmd">Chép</button></div>
+      <div class="result"><b>Claude sẽ làm gì</b><ul id="dvSteps"></ul></div>
+    </div>
+  </div>
+
+  <h2 style="margin-top:28px">Lệnh script</h2>
+  <div class="codebox"><pre class="code" id="dvScript">python dub_video.py prepare "&lt;nguồn&gt;" --to vi
+# Claude đọc work/dub/&lt;tên&gt;/transcript_for_llm.txt rồi ghi translations.json; bạn duyệt
+python dub_video.py render &lt;tên&gt; --voice male --subs
+python dub_video.py render &lt;tên&gt; --dry-run   # chỉ kiểm tra bản dịch, chưa đọc</pre><button class="copy" type="button" data-copy="dvScript">Chép</button></div>
+
+  <h2 style="margin-top:28px">Cách khớp giờ</h2>
+  <div class="grid cols-3">
+    <div class="card"><h3>Đơn vị lời</h3><p class="small">Lời được chia thành đơn vị một đến vài câu, tối đa khoảng 12 giây. Mỗi đơn vị có "số từ tối đa" theo thời lượng gốc để bản dịch không dài hơn chỗ chứa.</p></div>
+    <div class="card"><h3>Đọc nhanh lên</h3><p class="small">Câu dịch dài hơn thì giọng đọc nhanh lên (tối đa khoảng +50%), sau đó tăng nhịp nhẹ. Vẫn không kịp thì cắt đuôi rất ngắn. Script báo bao nhiêu đơn vị bị đọc nhanh hoặc cắt.</p></div>
+    <div class="card"><h3>Dựng lại nhanh</h3><p class="small">Sửa bản dịch rồi chạy lại: chỉ các đơn vị đã đổi được đọc lại, phần còn lại lấy từ bộ nhớ đệm.</p></div>
+  </div>
+
+  <h2 style="margin-top:28px">Prompt mẫu</h2>
+  <div class="sampleList" id="dvSamples"></div>
+
+  <div class="note">Một giọng cho cả video: không tách người nói, không giữ giọng gốc, không tách tiếng nói khỏi nhạc nền (chỉ hạ nhỏ), không khớp khẩu hình. Video đã có phụ đề cứng sẽ bị chồng chữ nếu thêm <code>--subs</code>. Lỗi nhận dạng thành lỗi dịch nên cần đọc lại các dòng nghi ngờ (tên riêng, thuật ngữ). Khớp giờ đã được kiểm tra bằng cách nhận dạng lại giọng lồng của hai video thử (Việt sang Anh, Anh sang Việt): từng câu bắt đầu lệch khoảng 0,2 giây. Chất lượng giọng chưa được nghe thử, hãy nghe một đoạn trước khi đăng. Chỉ làm với video của bạn hoặc video bạn có quyền dùng lại.</div>
+</section>
+
 <!-- ============ HỆ THỐNG ============ -->
 <section class="panel" id="p-he-thong" role="tabpanel" aria-labelledby="t-he-thong" hidden>
   <h2>Thư mục</h2>
@@ -552,6 +603,7 @@ python clip_video.py render ten-ngan --clips 1,3,5 --title-seconds 4</pre><butto
 ├─ edit_video.py         chỉnh video có sẵn (lệnh /edit-video)
 ├─ auto_subtitle.py      phụ đề tự động (lệnh /auto-subtitle)
 ├─ clip_video.py         cắt short từ video dài (lệnh /clip-video)
+├─ dub_video.py          lồng tiếng Anh ⇄ Việt (lệnh /dub-video)
 ├─ news_video.py         short từ link bài báo (lệnh /news-video)
 ├─ karaoke.py            kiểu phụ đề karaoke tím dùng chung
 ├─ docker-compose.yml    server tìm clip stock (cổng 3123)
@@ -568,7 +620,7 @@ python clip_video.py render ten-ngan --clips 1,3,5 --title-seconds 4</pre><butto
     <tr><th>Thành phần</th><th>Cần cho</th><th>Ghi chú</th></tr>
     <tr><td>Docker Desktop đang chạy</td><td>/short-video</td><td>chạy server short-video-maker lấy clip stock</td></tr>
     <tr><td><code>.env</code> có <code>PEXELS_API_KEY</code></td><td>/short-video</td><td>khóa Pexels miễn phí</td></tr>
-    <tr><td>ffmpeg</td><td>cả năm lệnh</td><td>có <code>libass</code> để vẽ phụ đề</td></tr>
+    <tr><td>ffmpeg</td><td>cả sáu lệnh</td><td>có <code>libass</code> để vẽ phụ đề</td></tr>
     <tr><td>Python: <code>edge-tts</code>, <code>faster-whisper</code></td><td>/short-video, /auto-subtitle</td><td>edge-tts cần internet</td></tr>
     <tr><td>Python: <code>opencv-python</code>, <code>yt-dlp</code>, <code>gdown</code></td><td>/clip-video</td><td>bám mặt, tải từ YouTube, tải từ Google Drive</td></tr>
     <tr><td>Python: <code>playwright</code>, <code>trafilatura</code>, <code>pillow</code> và Chrome</td><td>/news-video</td><td>chụp ảnh và trích văn bản bài báo (dùng Chrome có sẵn)</td></tr>
@@ -834,11 +886,39 @@ python clip_video.py render ten-ngan --clips 1,3,5 --title-seconds 4</pre><butto
     var ul = $('#nvOut'); ul.innerHTML = '';
     function add(t) { var li = document.createElement('li'); li.textContent = t; ul.appendChild(li); }
     add(links.length + (links.length > 1 ? ' video (làm hàng loạt), mỗi link một video' : ' video') + ' trong videos/news/<slug>/');
-    add('Giọng ' + (voice === 'male' ? 'nam' : 'nữ') + (aud === 'trung_niên' ? ' trung niên' : aud === 'none' ? ' gốc' : ' trẻ trung, truyền cảm') + ', khoảng 38–55 giây mỗi video.');
+    add('Giọng ' + (voice === 'male' ? 'nam' : 'nữ') + (aud === 'trung_niên' ? ' trung niên' : aud === 'none' ? ' gốc' : ' trẻ trung, truyền cảm') + ', không giới hạn thời lượng: viết đủ ý của bài.');
     add('Tiêu đề bài báo ở đầu khung, chân trang ghi "Nguồn: tên báo · ngày".');
   }
   $$('#nvBuilder input, #nvBuilder textarea').forEach(function (i) { i.addEventListener('input', nvUpdate); i.addEventListener('change', nvUpdate); });
   nvUpdate();
+
+  /* ---------- dub-video builder ---------- */
+  samples('#dvSamples', [
+    '/dub-video "https://www.youtube.com/watch?v=..." --to vi --voice male',
+    '/dub-video videos/bai-noi-tieng-anh.mp4 --subs',
+    '/dub-video "https://drive.google.com/file/d/.../view" --to en --voice female --bg 0',
+    '/dub-video videos/phong-van.mp4 --from vi --to en --voice male-mature'
+  ]);
+  function dvUpdate() {
+    var src = ($('#dvSrc').value || '').trim() || '<nguồn>';
+    var to = val('dvTo'), voice = val('dvVoice'), subs = val('dvSubs'), bg = val('dvBg');
+    var flags = '';
+    if (to) flags += ' --to ' + to;
+    if (voice !== 'female') flags += ' --voice ' + voice;
+    if (subs) flags += ' --subs';
+    if (bg !== '') flags += ' --bg ' + bg;
+    $('#dvCmd').textContent = '/dub-video ' + (/\s/.test(src) || /^https?:/.test(src) ? '"' + src + '"' : src) + flags;
+    var st = [
+      'Tải video (nếu là link), chép lời bằng Whisper medium, chia lời thành các đơn vị lồng tiếng. Lâu: khoảng 0,65–1,4 lần thời lượng video.',
+      'Dịch từng đơn vị ' + (to === 'en' ? 'sang tiếng Anh' : to === 'vi' ? 'sang tiếng Việt' : 'sang ngôn ngữ còn lại (Anh ⇄ Việt)') + ', ngắn gọn để đọc kịp, ghi translations.json.',
+      'Cho bạn duyệt vài dòng mẫu rồi mới dựng.',
+      'Đọc từng đơn vị bằng giọng ' + (voice === 'male' ? 'nam' : voice === 'male-mature' ? 'nam trung niên' : 'nữ') + ', đặt đúng mốc thời gian, ' + (bg === '0' ? 'tắt âm gốc' : 'hạ âm gốc xuống 12%') + (subs ? ', gắn phụ đề karaoke bằng ngôn ngữ lồng tiếng.' : ', giữ nguyên hình (nhanh).'),
+      'Kết quả trong videos/dub/<tên>/ kèm file .srt và .txt (kịch bản đã dịch).'
+    ];
+    var ul = $('#dvSteps'); ul.innerHTML = ''; st.forEach(function (x) { var li = document.createElement('li'); li.textContent = x; ul.appendChild(li); });
+  }
+  $$('#dvBuilder input').forEach(function (i) { i.addEventListener('input', dvUpdate); i.addEventListener('change', dvUpdate); });
+  dvUpdate();
 
   /* ---------- karaoke demo ---------- */
   var capEl = $('#kCap'), two = true, words = [], idx = 0, playing = true, timer = null;
