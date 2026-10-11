@@ -226,7 +226,7 @@ details > div { padding-bottom: 12px; }
 
   <h2 style="margin-top:28px">Cú pháp thống nhất</h2>
   <pre class="code">/short-video &lt;thể loại&gt;: &lt;chủ đề&gt; --&lt;đối tượng&gt; [--voice female|male] [--mode voice|music|both]</pre>
-  <p style="margin-top:10px">Thể loại là chữ trước dấu <code>:</code> đầu tiên (<code>tranh luận</code>, <code>info</code>, <code>tâm sự</code>; không có thì mặc định tranh luận). Đối tượng là <code>--trẻ</code> hoặc <code>--trung_niên</code> (mặc định trẻ). <code>--voice</code> chọn giới tính giọng; ghép với đối tượng thành giọng cụ thể.</p>
+  <p style="margin-top:10px">Thể loại là chữ trước dấu <code>:</code> đầu tiên (<code>tranh luận</code>, <code>info</code>, <code>tâm sự</code>, <code>góc nhìn</code>; không có thì mặc định tranh luận). Đối tượng là <code>--trẻ</code> hoặc <code>--trung_niên</code> (mặc định trẻ). <code>--voice</code> chọn giới tính giọng; ghép với đối tượng thành giọng cụ thể.</p>
   <h3 style="margin-top:18px">Thể loại và đối tượng quyết định gì</h3>
   <div class="tablewrap"><table>
     <tr><th>Thể loại</th><th>Đối tượng</th><th>Giọng (nữ / nam)</th><th>Tốc độ gốc</th><th>Nhạc nền</th><th>Độ dài</th></tr>
@@ -236,6 +236,8 @@ details > div { padding-bottom: 12px; }
     <tr><td>info</td><td>trung niên</td><td>như trên</td><td>+8%</td><td>Crystaline</td><td>52–58 s · 160–180 từ</td></tr>
     <tr><td>tâm sự</td><td>trẻ</td><td>như trên</td><td>+3%</td><td>Final Soliloquy</td><td>46–55 s · 130–155 từ</td></tr>
     <tr><td>tâm sự</td><td>trung niên</td><td>như trên</td><td>+3%</td><td>No.2 Remembering Her</td><td>46–55 s · 130–155 từ</td></tr>
+    <tr><td>góc nhìn</td><td>trẻ</td><td>như trên</td><td>+5%</td><td>Crystaline</td><td>50–60 s · 150–175 từ</td></tr>
+    <tr><td>góc nhìn</td><td>trung niên</td><td>như trên</td><td>+5%</td><td>Hopeful</td><td>50–60 s · 150–175 từ</td></tr>
   </table></div>
   <p class="small muted" style="margin-top:10px">Giọng trẻ nhanh và cao hơn, giọng trung niên chậm và trầm hơn (cộng thêm vào tốc độ gốc). Nhạc chọn theo tâm trạng ghi trong thư viện, chưa nghe thử từng bài; đổi ở <code>profiles.json</code>.</p>
   <div class="grid cols-2" style="margin-top:14px">
@@ -261,7 +263,7 @@ details > div { padding-bottom: 12px; }
     <div class="fields">
       <label class="f" style="grid-column: 1 / -1">Chủ đề<input type="text" id="svTopic" value="Chia đôi tiền khi hẹn hò: văn minh hay chi ly?"></label>
       <div class="f">Thể loại
-        <div class="seg" id="svKind"><label><input type="radio" name="svKind" value="debate" checked>Tranh luận</label><label><input type="radio" name="svKind" value="info">Info</label><label><input type="radio" name="svKind" value="confess">Tâm sự</label></div></div>
+        <div class="seg" id="svKind"><label><input type="radio" name="svKind" value="debate" checked>Tranh luận</label><label><input type="radio" name="svKind" value="info">Info</label><label><input type="radio" name="svKind" value="confess">Tâm sự</label><label><input type="radio" name="svKind" value="view">Góc nhìn</label></div></div>
       <div class="f">Đối tượng <small>--trẻ / --trung_niên</small>
         <div class="seg" id="svAud"><label><input type="radio" name="svAud" value="tre" checked>Trẻ</label><label><input type="radio" name="svAud" value="trung_nien">Trung niên</label></div></div>
       <div class="f">Chế độ video <small>--mode</small>
@@ -712,6 +714,7 @@ python dub_video.py render &lt;tên&gt; --dry-run   # chỉ kiểm tra bản d�
     '/short-video tranh luận: chia đôi tiền khi hẹn hò --trẻ',
     '/short-video info: lợi ích của việc dậy sớm --trung_niên',
     '/short-video tâm sự: ai sẽ bên bạn khi mệt --trung_niên',
+    '/short-video góc nhìn: áp lực đồng trang lứa --trẻ',
     '/short-video info: mẹo ngủ ngon --trẻ --voice male --mode both',
     '/short-video tranh luận: khách hàng là thượng đế hay đúng quy trình --trung_niên --mode music'
   ]);
@@ -745,7 +748,8 @@ python dub_video.py render &lt;tên&gt; --dry-run   # chỉ kiểm tra bản d�
   var PROFILE = {
     debate:  { label: 'tranh luận', rate: '+10%', secs: '30–45 giây', words: '110–135 từ', music: { tre: 'Oh Please - Telecasted', trung_nien: 'Hopeful - Nat Keefe' } },
     info:    { label: 'info',       rate: '+8%',  secs: '52–58 giây', words: '160–180 từ', music: { tre: 'Touch - Anno Domini Beats', trung_nien: 'Crystaline - Quincas Moreira' } },
-    confess: { label: 'tâm sự',     rate: '+3%',  secs: '46–55 giây', words: '130–155 từ', music: { tre: 'Final Soliloquy - Asher Fulero', trung_nien: 'No.2 Remembering Her - Esther Abrami' } }
+    confess: { label: 'tâm sự',     rate: '+3%',  secs: '46–55 giây', words: '130–155 từ', music: { tre: 'Final Soliloquy - Asher Fulero', trung_nien: 'No.2 Remembering Her - Esther Abrami' } },
+    view:    { label: 'góc nhìn',   rate: '+5%',  secs: '50–60 giây', words: '150–175 từ', music: { tre: 'Crystaline - Quincas Moreira', trung_nien: 'Hopeful - Nat Keefe' } }
   };
   function svUpdate() {
     var topic = ($('#svTopic').value || '<chủ đề>').trim();

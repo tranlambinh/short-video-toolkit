@@ -1,6 +1,6 @@
 ---
 description: Từ chủ đề → bài fanpage → kịch bản → short video dọc 9:16 có phụ đề karaoke tím; chọn thể loại và đối tượng để tự khớp giọng, nhạc, nhịp, văn phong
-argument-hint: [tranh luận:|info:|tâm sự:] <chủ đề> [--trẻ|--trung_niên] [--voice female|male] [--mode voice|music|both]
+argument-hint: [tranh luận:|info:|tâm sự:|góc nhìn:] <chủ đề> [--trẻ|--trung_niên] [--voice female|male] [--mode voice|music|both]
 ---
 
 Lệnh: $ARGUMENTS
@@ -14,15 +14,17 @@ Ví dụ:
 /short-video tranh luận: chia đôi tiền khi hẹn hò --trẻ
 /short-video info: lợi ích của việc dậy sớm --trung_niên
 /short-video tâm sự: ai sẽ bên bạn khi mệt --trung_niên
+/short-video góc nhìn: áp lực đồng trang lứa --trẻ
 /short-video info: mẹo ngủ ngon --trẻ --voice male --mode both
 ```
 
 **Tách tham số trước khi viết nội dung** (các tham số không đưa vào bài viết hay kịch bản):
 
-1. **Thể loại** = phần chữ trước dấu `:` đầu tiên, nếu khớp một trong ba (không phân biệt hoa thường và dấu):
+1. **Thể loại** = phần chữ trước dấu `:` đầu tiên, nếu khớp một trong bốn (không phân biệt hoa thường và dấu):
    - `tranh luận` (hoặc `tranh_luận`) → `tranh-luan`
    - `info` (hoặc `thông tin`) → `info`
    - `tâm sự` (hoặc `tam su`) → `tam-su`
+   - `góc nhìn` (hoặc `goc nhin`, `phân tích`) → `goc-nhin`
 
    Không có dấu `:` hoặc không khớp thì cả câu là chủ đề, thể loại mặc định là `tranh-luan`.
 2. **Đối tượng** = `--trẻ` hoặc `--trung_niên` (chấp nhận `--tre`, `--trung-nien`, `--young`, `--mature`). Mặc định `--trẻ`.
@@ -42,6 +44,8 @@ Giá trị nằm ở `profiles.json` (nhịp, nhạc) và `voices.json` (giọng
 | info | trung niên | như trên | +8% | Crystaline - Quincas Moreira | 52-58 s, 160-180 từ |
 | tâm sự | trẻ | như trên | +3% | Final Soliloquy - Asher Fulero | 46-55 s, 130-155 từ |
 | tâm sự | trung niên | như trên | +3% | No.2 Remembering Her - Esther Abrami | 46-55 s, 130-155 từ |
+| góc nhìn | trẻ | như trên | +5% | Crystaline - Quincas Moreira | 50-60 s, 150-175 từ |
+| góc nhìn | trung niên | như trên | +5% | Hopeful - Nat Keefe | 50-60 s, 150-175 từ |
 
 Giọng trẻ cộng thêm khoảng +6% tốc độ và cao hơn; giọng trung niên chậm hơn khoảng 8% và trầm hơn (đã tính sẵn trong `voices.json`, nên tốc độ nghe thực tế: trẻ nhanh nhất, trung niên chậm rãi). Nhạc nền chọn theo tâm trạng ghi trong thư viện, chưa nghe thử từng bài; nếu không hợp thì sửa `profiles.json` hoặc ghi `music` trong file kịch bản.
 
@@ -73,6 +77,8 @@ Bốn nhóm chủ đề: Văn hóa & Lối sống · Giá trị & Tiêu chuẩn 
 
 **Info:** giọng gần gũi, có chiều sâu, theo bài "Tuổi 40": câu mở đúc kết một ý lớn; 4-5 ý có tiêu đề ngắn (emoji theo đối tượng) và 2-3 câu giải thích; kết bằng câu hỏi kéo bình luận. Không nêu số liệu hay trích dẫn không chắc.
 
+**Góc nhìn:** bài phân tích điềm tĩnh, nhìn một vấn đề từ nhiều phía để người đọc nghĩ khác đi, không kể chuyện riêng và không cổ vũ một phe. Cấu trúc: tiêu đề ngắn nêu vấn đề; một câu mở đổi góc nhìn ("nếu đổi góc nhìn một chút..."); 3-4 ý, mỗi ý một tiêu đề ngắn (emoji số 1️⃣ 2️⃣ 3️⃣ theo thứ tự lập luận) và 2-3 câu giải thích; một ý cuối nêu cách dùng hoặc cách hiểu có ích; một câu chốt là câu hỏi đáng hỏi; kết bằng câu hỏi mời bình luận. Quy tắc: không bịa số liệu, tên nghiên cứu hay trích dẫn; chỉ dùng khái niệm phổ biến mà mình chắc (ví dụ "so sánh xã hội") và nêu không có năm hay tác giả; không phán đúng sai, không gán lỗi cho một nhóm người, nêu rõ khi một ý chỉ là cách nhìn.
+
 **Tâm sự:** giọng kể xưng "mình", ấm và chậm; mở bằng một khoảnh khắc đời thường, đi qua vài cảm nhận, kết bằng câu hỏi nhẹ mời chia sẻ. Không bịa chi tiết đời tư cụ thể (tên, sự kiện), chỉ dùng cảm nhận phổ biến. Không khuyên răn.
 
 Lưu vào `posts/<slug>.md` và hiển thị đầy đủ để tôi duyệt.
@@ -95,6 +101,7 @@ Quy tắc chung: 5-6 cảnh; số viết bằng chữ ("bốn mươi", không "4
 
 - **Tranh luận:** Hook (nêu ngay hai thế lực đối lập, 1 câu, tối đa khoảng 15 từ) → quan điểm thứ nhất (1-2 cảnh) → quan điểm thứ hai (1-2 cảnh, độ dài tương đương) → câu hỏi mở. **Không gọi tên "phe" trong lời đọc**, chuyển quan điểm bằng câu tự nhiên, đa dạng cách dẫn như ở Bước 1. CTA hỏi "bạn nghiêng về cách nào?". `terms` của hai quan điểm khác hẳn nhau về hình ảnh.
 - **Info:** cảnh đầu là hook, mỗi ý một cảnh ngắn, cảnh cuối là câu hỏi kêu gọi.
+- **Góc nhìn:** cảnh đầu nêu câu "đổi góc nhìn" (hook, tối đa khoảng 15 từ), mỗi ý một cảnh (2-3 câu, bắt đầu bằng ý chính), một cảnh chốt bằng câu hỏi đáng hỏi, cảnh cuối mời bình luận. Giọng điềm đạm, rõ ràng; hình minh họa ý (người, nơi chốn, đồ vật đời thường), tránh hình quá cảm xúc như ở tâm sự.
 - **Tâm sự:** cảnh đầu là khoảnh khắc mở đầu, giữa là những cảm nhận, cảnh cuối là câu hỏi nhẹ; hình dịu, ánh sáng ấm.
 
 Hiển thị bảng cảnh | lời đọc | từ khóa hình, kèm giọng, nhạc và độ dài dự kiến, để tôi duyệt.

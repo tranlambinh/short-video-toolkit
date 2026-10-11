@@ -83,6 +83,38 @@ def trim_blank_top(path):
     return cut
 
 
+def squeeze_blank(src, dst, min_run=300, keep=40):
+    """Remove empty bands in the middle of a page screenshot (ad slots that never loaded), leaving `keep` px of white.
+    Returns the path to read from: dst when something was removed, otherwise src."""
+    import numpy as np
+    from PIL import Image
+    im = Image.open(src).convert("RGB")
+    a = np.asarray(im)
+    blank = (a.min(axis=2) > 245).all(axis=1)
+    runs, start = [], None
+    for y, b in enumerate(blank):
+        if b and start is None:
+            start = y
+        elif not b and start is not None:
+            if y - start >= min_run and start > 0:
+                runs.append((start, y))
+            start = None
+    if not runs:
+        return src
+    parts, pos = [], 0
+    for y0, y1 in runs:
+        parts.append(im.crop((0, pos, im.width, y0 + keep)))
+        pos = y1 - keep
+    parts.append(im.crop((0, pos, im.width, im.height)))
+    out = Image.new("RGB", (im.width, sum(p.height for p in parts)), "white")
+    y = 0
+    for p in parts:
+        out.paste(p, (0, y))
+        y += p.height
+    out.save(dst)
+    return dst
+
+
 def fetch_one(page, url, name=None):
     import trafilatura
     page.goto(url, wait_until="domcontentloaded", timeout=60000)
@@ -188,10 +220,16 @@ def footer_events(title, source, date, total, stock_spans, lang="vi"):
 
 
 def build_ass(sents, starts, art, sc, total, stock_spans, path):
-    segs = [{"start": starts[i] + s["start"], "end": starts[i] + s["start"] + s["dur"], "text": s["text"],
-             "words": [{"w": w["w"], "s": starts[i] + s["start"] + w["s"], "e": starts[i] + s["start"] + w["e"]}
-                       for w in s.get("words", [])]}
-            for i, ss in enumerate(sents) for s in ss]
+    segs = []
+    for i, ss in enumerate(sents):
+        sub = sc["scenes"][i].get("sub")           # subtitle text in another language, matched sentence by sentence
+        subs = sv.split_sentences(sub) if sub else None
+        if subs is not None and len(subs) != len(ss):
+            sys.exit(f"scene {i + 1}: 'sub' has {len(subs)} sentences but 'vi' has {len(ss)}; they must match one to one")
+        for j, s_ in enumerate(ss):
+            t0 = starts[i] + s_["start"]
+            words = [] if subs else [{"w": w["w"], "s": t0 + w["s"], "e": t0 + w["e"]} for w in s_.get("words", [])]
+            segs.append({"start": t0, "end": t0 + s_["dur"], "text": subs[j] if subs else s_["text"], "words": words})
     ass = karaoke.build_ass(segs, W, H, y_px=CAP_Y)
     styles = (
         "Style: FooterTitle,Arial,46,&H00FFFFFF,&H00FFFFFF,&H00000000,&H00000000,-1,0,0,0,100,100,0,0,1,0,0,8,60,60,0,1\n"
@@ -207,13 +245,15 @@ def build_ass(sents, starts, art, sc, total, stock_spans, path):
     path.write_text(ass, encoding="utf-8")
 
 
-def article_clip(shot, T, y0, out):
+def article_clip(shot, T, y0, out, share=None):
     """Content-area clip from the screenshot: scrolls down slowly. Returns the scroll distance used."""
     from PIL import Image
     w, h = Image.open(shot).size
     sh = round(h * W / w)                                  # height once scaled to 1080 wide
     room = max(0, sh - CONTENT_H - y0)
     D = min(room, SCROLL_PX_PER_SEC * T)
+    if share is not None:                                  # several article scenes: each gets its part of the page
+        D = min(D, room * share)
     vf = (f"scale={W}:-2,pad={W}:'max({CONTENT_H},ih)':0:0:white,"
           f"crop={W}:{CONTENT_H}:0:'{y0:.0f}+{D:.0f}*min(1,t/{T:.2f})',fps=30,format=yuv420p")
     sv.ff("-loop", 1, "-framerate", 30, "-t", f"{T:.3f}", "-i", shot, "-vf", vf, "-c:v", "libx264", "-crf", 18,
@@ -285,11 +325,23 @@ def build_one(slug, a):
     log(f"narration {total - sv.TAIL:.1f}s (no length limit for news)")
 
     segs, stock_spans, y0 = [], [], 0.0
+    art_idx = [k for k, x in enumerate(scenes) if x.get("visual", "stock") == "article"]
     shot = str(d / "screenshot.png")
+    if sc.get("shot_height") or sc.get("shot_top"):   # keep a slice of the page (drops an ad on top, or a popup / blank part below)
+        from PIL import Image
+        im = Image.open(shot)
+        top = int(sc.get("shot_top", 0))
+        bottom = min(int(sc.get("shot_height", im.height)), im.height)
+        im.crop((0, top, im.width, bottom)).save(d / "screenshot_crop.png")
+        shot = str(d / "screenshot_crop.png")
+    sq = squeeze_blank(shot, d / "screenshot_squeezed.png")
+    if str(sq) != shot:
+        log(f"  removed empty bands from the screenshot (ad slots that did not load)")
+        shot = str(sq)
     for i, s in enumerate(scenes):
         out = d / f"c{i}.mp4"
         if s.get("visual", "stock") == "article":
-            y0 += article_clip(shot, targets[i], y0, out)
+            y0 += article_clip(shot, targets[i], y0, out, share=targets[i] / sum(targets[k] for k in art_idx if k >= i))
         else:
             v = sv.render_scene_picture(i, s, targets[i], d, a.reuse_footage)
             sv.ff("-i", v, "-vf", f"crop={W}:{CONTENT_H}:0:{(1920 - CONTENT_H) // 2},fps=30,format=yuv420p",

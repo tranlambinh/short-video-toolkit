@@ -55,6 +55,24 @@
         55
       ]
     },
+    "goc-nhin": {
+      "label": "Góc nhìn",
+      "aliases": [
+        "goc nhin",
+        "viewpoint",
+        "perspective",
+        "phan tich"
+      ],
+      "rate": 5,
+      "words": [
+        150,
+        175
+      ],
+      "seconds": [
+        50,
+        60
+      ]
+    },
     "news": {
       "label": "Tin tức",
       "aliases": [
@@ -107,6 +125,10 @@
     "tam-su": {
       "tre": "Final Soliloquy - Asher Fulero.mp3",
       "trung-nien": "No.2 Remembering Her - Esther Abrami.mp3"
+    },
+    "goc-nhin": {
+      "tre": "Crystaline - Quincas Moreira.mp3",
+      "trung-nien": "Hopeful - Nat Keefe.mp3"
     },
     "news": {
       "tre": "Oh Please - Telecasted.mp3",

@@ -27,8 +27,9 @@ Quy trình 3 bước, **dừng chờ duyệt sau bước 1 và bước 2**:
 /short-video tranh luận: chia đôi tiền khi hẹn hò --trẻ
 /short-video info: lợi ích của việc dậy sớm --trung_niên
 /short-video tâm sự: ai sẽ bên bạn khi mệt --trung_niên
+/short-video góc nhìn: áp lực đồng trang lứa --trẻ
 ```
-- **Thể loại** là chữ trước dấu `:` đầu tiên: `tranh luận`, `info`, `tâm sự` (không có thì mặc định tranh luận).
+- **Thể loại** là chữ trước dấu `:` đầu tiên: `tranh luận`, `info`, `tâm sự`, `góc nhìn` (không có thì mặc định tranh luận).
 - **Đối tượng** là `--trẻ` hoặc `--trung_niên` (mặc định trẻ).
 - Thể loại và đối tượng tự chọn **giọng đọc, tốc độ, nhạc nền, độ dài, văn phong** (giá trị ở `profiles.json` và `voices.json`):
 
@@ -40,6 +41,8 @@ Quy trình 3 bước, **dừng chờ duyệt sau bước 1 và bước 2**:
 | info | trung niên | như trên | +8% | Crystaline | 52-58 s, 160-180 từ |
 | tâm sự | trẻ | như trên | +3% | Final Soliloquy | 46-55 s, 130-155 từ |
 | tâm sự | trung niên | như trên | +3% | No.2 Remembering Her | 46-55 s, 130-155 từ |
+| góc nhìn | trẻ | như trên | +5% | Crystaline | 50-60 s, 150-175 từ |
+| góc nhìn | trung niên | như trên | +5% | Hopeful | 50-60 s, 150-175 từ |
 
 Giọng trẻ nhanh và cao hơn, giọng trung niên chậm và trầm hơn. **Cột nhạc nền là tên file nhạc của tác giả bộ công cụ; repo không kèm nhạc.** Bạn bỏ nhạc miễn phí của mình vào `assets/music/` rồi đổi tên file trong mục `music` của `profiles.json` (xem `assets/music/README.md`); thiếu file thì dùng file đầu tiên trong thư mục, thư mục trống thì video chỉ có giọng đọc.
 - **Văn phong trẻ:** xưng "bạn/mình", câu ngắn, hook trực diện, ví dụ đời thường, 2-5 emoji, hình người 20-30 tuổi. **Trung niên:** câu dài hơn, điềm đạm, ví dụ gia đình/sức khỏe/tài chính, 0-2 emoji, hình người 40-55 tuổi.
