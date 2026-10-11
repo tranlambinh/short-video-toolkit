@@ -221,6 +221,41 @@ def article_clip(shot, T, y0, out):
     return D
 
 
+def audio_gaps(path):
+    """Holes in the audio timeline (seconds) longer than 0.3 s: a gap means narration is missing."""
+    out = subprocess.check_output(["ffprobe", "-v", "error", "-show_entries", "packet=pts_time", "-select_streams", "a",
+                                   "-of", "csv=p=0", str(path)], text=True)
+    p = [float(x.strip(",")) for x in out.split() if x.strip(",")]
+    return [(round(x, 2), round(y, 2)) for x, y in zip(p, p[1:]) if y - x > 0.3]
+
+
+def compose(d, ass_path, music, total, out):
+    """Mix voice and music first (audio only), then lay the picture and subtitles over the content and attach that audio.
+    Doing both in one ffmpeg graph used to drop about 3 s of audio at the first scene changes."""
+    mix = d / "mix.wav"
+    fade = f"afade=t=out:st={total - 2:.2f}:d=2"
+    afc = (f"[0:a]loudnorm=I=-16:TP=-1.5,aresample=44100[vo];"
+           f"[1:a]loudnorm=I=-14:TP=-1.5,aresample=44100,volume=0.18,{fade}[m];"
+           f"[vo][m]amix=inputs=2:duration=first:normalize=0,apad=whole_dur={total:.3f}[aud]")
+    subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", str(d / "voice.wav"), "-stream_loop", "-1", "-i", str(music),
+                    "-filter_complex", afc, "-map", "[aud]", "-t", f"{total:.3f}", "-ar", "44100", "-ac", "2", str(mix)],
+                   cwd=ROOT, check=True)
+    rel = ass_path.relative_to(ROOT).as_posix()
+    fc = (f"color=c=0x15102a:s={W}x{H}:r=30:d={total:.3f}[bg];[bg][0:v]overlay=0:{CONTENT_Y}[a];"
+          f"[a]drawbox=x=0:y=0:w={W}:h={HEAD_H}:color=0x241546:t=fill,"
+          f"drawbox=x=0:y={HEAD_H - 6}:w={W}:h=6:color=0xB44CFF:t=fill,"
+          f"drawbox=x=0:y={FOOT_Y}:w={W}:h={H - FOOT_Y}:color=0x241546:t=fill,"
+          f"drawbox=x=0:y={FOOT_Y}:w={W}:h=6:color=0xB44CFF:t=fill,"
+          f"{compat.ass_filter(rel)},format=yuv420p[v]")
+    out.parent.mkdir(parents=True, exist_ok=True)
+    subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", str(d / "content.mp4"), "-i", str(mix), "-filter_complex", fc,
+                    "-map", "[v]", "-map", "1:a", "-t", f"{total:.3f}", "-c:v", "libx264", "-crf", "20", "-preset", "fast",
+                    "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", str(out)], cwd=ROOT, check=True)
+    gaps = audio_gaps(out)
+    if gaps:
+        log(f"WARNING: the audio has holes at {gaps}; part of the narration is missing")
+
+
 def build_one(slug, a):
     d = BASE / slug
     art = json.loads((d / "article.json").read_text(encoding="utf-8"))
@@ -247,7 +282,7 @@ def build_one(slug, a):
     targets[-1] += sv.TAIL
     starts = [sum(targets[:i]) for i in range(n)]
     total = sum(targets)
-    log(f"narration {total - sv.TAIL:.1f}s (aim {prof['seconds'][0]}-{prof['seconds'][1]}s)")
+    log(f"narration {total - sv.TAIL:.1f}s (no length limit for news)")
 
     segs, stock_spans, y0 = [], [], 0.0
     shot = str(d / "screenshot.png")
@@ -277,19 +312,7 @@ def build_one(slug, a):
     outdir = OUT / slug
     outdir.mkdir(parents=True, exist_ok=True)
     out = outdir / f"{slug}.mp4"
-    fade = f"afade=t=out:st={total - 2:.2f}:d=2"
-    fc = (f"color=c=0x15102a:s={W}x{H}:r=30:d={total:.3f}[bg];[bg][0:v]overlay=0:{CONTENT_Y}[a];"
-          f"[a]drawbox=x=0:y=0:w={W}:h={HEAD_H}:color=0x241546:t=fill,"
-          f"drawbox=x=0:y={HEAD_H - 6}:w={W}:h=6:color=0xB44CFF:t=fill,"
-          f"drawbox=x=0:y={FOOT_Y}:w={W}:h={H - FOOT_Y}:color=0x241546:t=fill,"
-          f"drawbox=x=0:y={FOOT_Y}:w={W}:h=6:color=0xB44CFF:t=fill,"
-          f"{compat.ass_filter(rel)},format=yuv420p[v];"
-          f"[1:a]loudnorm=I=-16:TP=-1.5[vo];[2:a]loudnorm=I=-14:TP=-1.5,volume=0.18,{fade}[m];"
-          f"[vo][m]amix=inputs=2:duration=first:normalize=0[aud]")
-    subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", str(d / "content.mp4"), "-i", str(d / "voice.wav"),
-                    "-stream_loop", "-1", "-i", str(music), "-filter_complex", fc, "-map", "[v]", "-map", "[aud]",
-                    "-t", f"{total:.3f}", "-c:v", "libx264", "-crf", "20", "-preset", "fast", "-c:a", "aac",
-                    "-b:a", "192k", "-movflags", "+faststart", str(out)], cwd=ROOT, check=True)
+    compose(d, ass_path, music, total, out)
     # one frame in the middle of every scene, for the visual check
     frames = []
     for i in range(n):
@@ -324,6 +347,19 @@ def cmd_build(a):
         log(f"  failed: {s} ({e[:120]})")
 
 
+def cmd_remux(a):
+    for slug in a.slugs:
+        d = BASE / slug
+        sc = json.loads((d / "script.json").read_text(encoding="utf-8"))
+        prof = profiles.resolve(genre=a.genre or sc.get("genre") or "news", audience=a.audience or sc.get("audience") or "tre",
+                                voice=a.voice, music=sc.get("music"))
+        music = sv.ensure_music(prof["music"], d)
+        total = sv.probe_duration(d / "content.mp4")
+        out = OUT / slug / f"{slug}.mp4"
+        compose(d, d / "subs.ass", music, total, out)
+        log(f"remuxed {out.relative_to(ROOT)}  {sv.probe_duration(out):.1f}s  {out.stat().st_size / 1048576:.1f} MB")
+
+
 def cmd_status(a):
     if not BASE.exists():
         print("no articles yet")
@@ -354,6 +390,12 @@ def main():
     b.add_argument("--reuse-footage", action="store_true")
     b.add_argument("--dry-run", action="store_true")
     b.set_defaults(fn=cmd_build)
+    r = sub.add_parser("remux", help="redo only the final mix and compose for built videos (no new voice or footage)")
+    r.add_argument("slugs", nargs="+")
+    r.add_argument("--voice", default=None)
+    r.add_argument("--audience", default=None, help="selects the music, as in build")
+    r.add_argument("--genre", default=None)
+    r.set_defaults(fn=cmd_remux)
     s = sub.add_parser("status")
     s.set_defaults(fn=cmd_status)
     a = ap.parse_args()

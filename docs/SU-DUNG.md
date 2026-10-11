@@ -8,6 +8,7 @@ Năm kỹ năng chạy trong Claude Code, gọi bằng lệnh `/...`. Tất cả
 | `/edit-video` | Cắt, ghép, chuyển cảnh, tốc độ, mờ dần, zoom, logo cho video có sẵn | Không |
 | `/auto-subtitle` | Nhận dạng giọng nói, soát lỗi, dịch, gắn phụ đề karaoke (Việt/Anh) | Không |
 | `/news-video` | Làm short từ một hoặc nhiều link bài báo: ảnh chụp bài báo, hình minh họa, giọng đọc tóm tắt, phụ đề, chân trang tiêu đề và nguồn | Có (clip stock) |
+| `/dub-video` | Lồng tiếng Anh sang Việt hoặc Việt sang Anh | Không |
 | `/clip-video` | Cắt nhiều short dọc từ một video ngang dài 15-30 phút theo các thông điệp chính (Claude chọn, bạn duyệt), có tiêu đề chữ và phụ đề karaoke | Không |
 
 ## 1. `/short-video`: từ chủ đề đến video
@@ -157,7 +158,7 @@ Giới hạn: Claude chọn clip theo lời nói và vài khung hình mẫu, kh�
 ```
 /news-video <link> [<link> ...] [--audience trẻ|trung_niên] [--voice female|male]
 ```
-Dùng `news_video.py`. Một link làm một video, nhiều link làm cả lô. **Giọng mặc định: nữ trẻ (`female-young`), truyền cảm hơn** (lên xuống giọng và đổi nhịp theo câu mạnh hơn khoảng 40%, cấu hình `express` của thể loại `news` trong `profiles.json`).
+Dùng `news_video.py`. Một link làm một video, nhiều link làm cả lô. **Giọng mặc định: nữ trẻ (`female-young`), truyền cảm hơn** (lên xuống giọng và đổi nhịp theo câu mạnh hơn khoảng 50%, cấu hình `express` của thể loại `news` trong `profiles.json`).
 
 Khung 1080×1920:
 - **Tiêu đề bài báo** ở dải đầu khung (cao 230 px).
@@ -167,11 +168,39 @@ Khung 1080×1920:
 
 Quy trình (Claude dừng chờ bạn duyệt cả lô trước khi dựng):
 1. `python news_video.py fetch "<link1>" "<link2>"`: mở từng bài trong Chrome ẩn (khung điện thoại), tắt popup cookie, chụp ảnh trang, trích văn bản. Lưu ở `work/news/<slug>/`.
-2. Claude đọc từng bài và viết `script.json`: tóm tắt trung lập chỉ bằng thông tin trong bài (130-160 từ, 6 cảnh, số viết bằng chữ), cảnh đầu và cuối là ảnh chụp, các cảnh giữa là clip minh họa.
+2. Claude đọc từng bài và viết `script.json`: tóm tắt trung lập chỉ bằng thông tin trong bài (không giới hạn thời lượng, đủ ý của bài, thường 6-12 cảnh, số viết bằng chữ), cảnh đầu và cuối là ảnh chụp, các cảnh giữa là clip minh họa.
 3. Bạn duyệt bảng các bài (tiêu đề, nguồn, độ dài, ghi chú).
 4. `python news_video.py build --all` dựng các bài đã có kịch bản và chưa có video; ra `videos/news/<slug>/<slug>.mp4` và ảnh ghép kiểm tra `work/news/<slug>/montage.png`. `python news_video.py status` cho biết bài nào đã lấy, đã có kịch bản, đã dựng.
 
 Lưu ý: trang bị chặn hoặc có paywall thì không lấy được nội dung đủ (script báo "nội dung ngắn"); clip stock chỉ minh họa, không phải ảnh sự kiện; luôn ghi nguồn và nên xin phép tòa soạn nếu dùng thương mại. Tóm tắt bằng lời mới, không thêm thông tin ngoài bài.
+
+## 6. `/dub-video`: lồng tiếng Anh sang Việt hoặc Việt sang Anh
+
+```
+/dub-video <nguồn> [--from auto|en|vi] [--to vi|en] [--voice female|male] [--subs] [--bg 0.12] [--rate 0]
+```
+Nguồn là file trên máy, link YouTube hoặc link Google Drive (chia sẻ "Anyone with the link"). Ngôn ngữ nguồn tự nhận dạng; `--to` không ghi thì lồng sang ngôn ngữ còn lại.
+
+Quy trình (dừng chờ duyệt ở bước 3):
+1. **Chuẩn bị:** `python dub_video.py prepare "<nguồn>"` tải video, chép lời bằng Whisper medium, chia lời thành các đơn vị lồng tiếng (một đến vài câu, tối đa khoảng 12 giây), mỗi đơn vị có "số từ tối đa" theo thời lượng.
+2. **Dịch:** Claude dịch từng đơn vị (dịch để đọc thành tiếng, ngắn gọn, giữ trong ngân sách từ) và ghi `work/dub/<tên>/translations.json`.
+3. **Duyệt:** bạn xem vài dòng mẫu rồi xác nhận hoặc sửa.
+4. **Dựng:** `python dub_video.py render <tên> [--voice ...] [--subs]` tổng hợp giọng cho từng đơn vị, đặt đúng mốc thời gian câu gốc (đọc nhanh lên nếu dài, tối đa khoảng +50% rồi tăng nhịp nhẹ, vẫn không kịp thì cắt đuôi rất ngắn), hạ âm gốc xuống khi giọng lồng đọc, ghép lại. Kết quả `videos/dub/<tên>/<tên>-<ngôn ngữ>.mp4` kèm `.srt` và `.txt` (kịch bản đã dịch). Dựng lại sau khi sửa dịch chỉ tổng hợp lại các đơn vị đã đổi.
+
+| Tham số | Giá trị | Mặc định | Ý nghĩa |
+|---|---|---|---|
+| `--to` | `vi` / `en` | ngôn ngữ còn lại | ngôn ngữ giọng lồng |
+| `--voice` | `female` / `male` / khóa `voices.json` | `female` | giọng lồng (tiếng Anh: `en-female`, `en-male`, `en-male-mature`) |
+| `--subs` | cờ | tắt | gắn phụ đề karaoke bằng ngôn ngữ lồng tiếng (dựng lại hình, chậm hơn) |
+| `--bg` | 0 đến 1 | 0,12 | mức âm gốc nghe được dưới giọng lồng (`0` tắt hẳn) |
+| `--rate` | số nguyên (%) | 0 | tốc độ đọc cơ bản |
+
+Prompt mẫu:
+- `/dub-video https://www.youtube.com/watch?v=<id> --to vi --voice male`
+- `/dub-video D:ideoai-noi-tieng-anh.mp4 --subs`
+- `/dub-video https://drive.google.com/file/d/<id>/view --to en --voice female --bg 0`
+
+Giới hạn: một giọng cho cả video (không tách người nói, không giữ giọng gốc), không tách được tiếng nói khỏi nhạc nền (chỉ hạ nhỏ âm gốc), không khớp khẩu hình, video có phụ đề cứng sẽ bị chồng chữ khi thêm `--subs`, lỗi nhận dạng thành lỗi dịch nên cần đọc lại các dòng nghi ngờ. Khớp thời gian đã kiểm tra bằng cách nhận dạng lại giọng lồng của hai video thử (Việt sang Anh và Anh sang Việt): từng câu bắt đầu lệch khoảng 0,2 giây so với câu gốc; chất lượng giọng chưa được nghe thử.
 
 ## Thư mục
 `posts/` bài đăng · `specs/` kịch bản · `videos/` thành phẩm (`videos/clips/` cho các short cắt từ video dài, `videos/news/` cho video từ bài báo) · `work/` file trung gian · `assets/music/` nhạc · `models/` Whisper medium · `patch/` bản vá ẩn phụ đề của short-video-maker · `docker-compose.yml` server tìm clip (cổng 3123).

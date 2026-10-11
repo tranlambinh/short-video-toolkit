@@ -1,6 +1,6 @@
 # Bộ công cụ làm short video dọc (TikTok / Reels / Shorts)
 
-Năm kỹ năng chạy trong **Claude Code**, gọi bằng lệnh `/...`. Video xuất ra dọc 1080×1920, có phụ đề karaoke tím chạy theo giọng đọc, chủ yếu cho tiếng Việt (có hỗ trợ tiếng Anh).
+Sáu kỹ năng chạy trong **Claude Code**, gọi bằng lệnh `/...`. Video xuất ra dọc 1080×1920, có phụ đề karaoke tím chạy theo giọng đọc, chủ yếu cho tiếng Việt (có hỗ trợ tiếng Anh).
 
 | Lệnh | Việc làm |
 |---|---|
@@ -9,6 +9,7 @@ Năm kỹ năng chạy trong **Claude Code**, gọi bằng lệnh `/...`. Video 
 | `/clip-video` | Video ngang dài 15-30 phút → nhiều short dọc theo các thông điệp chính, có tiêu đề chữ |
 | `/auto-subtitle` | Video có tiếng nói → phụ đề karaoke (Việt/Anh), có soát lỗi và dịch |
 | `/edit-video` | Cắt, ghép, chuyển cảnh, tốc độ, zoom, gắn logo (có chế độ hàng loạt) |
+| `/dub-video` | Lồng tiếng: video tiếng Anh sang giọng đọc tiếng Việt, hoặc video tiếng Việt sang giọng đọc tiếng Anh (nguồn: file, YouTube, Google Drive) |
 
 Hướng dẫn chi tiết từng lệnh, tham số và prompt mẫu: [`docs/SU-DUNG.md`](docs/SU-DUNG.md). Bản tương tác: mở `docs/huong-dan.html` bằng trình duyệt.
 

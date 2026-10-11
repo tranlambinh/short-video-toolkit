@@ -37,8 +37,6 @@ def transcribe(video, lang, work):
     from faster_whisper import WhisperModel
     wav = work / "audio.wav"
     subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", str(video), "-vn", "-ac", "1", "-ar", "16000", str(wav)], check=True)
-    if not MODEL_DIR.exists():
-        sys.exit(f"Whisper medium model not found at {MODEL_DIR}")
     log("loading Whisper medium (CPU, int8) ...")
     model = WhisperModel(str(MODEL_DIR) if MODEL_DIR.exists() else "medium", download_root=str(ROOT / "models" / "hf-cache"), device="cpu", compute_type="int8", cpu_threads=max(4, (os.cpu_count() or 8) // 2))
     t0 = time.time()

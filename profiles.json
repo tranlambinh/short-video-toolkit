@@ -64,14 +64,15 @@
       ],
       "rate": 8,
       "words": [
-        120,
-        160
+        130,
+        320
       ],
       "seconds": [
-        38,
-        58
+        45,
+        130
       ],
-      "express": 1.4
+      "express": 1.5,
+      "_note": "tin tức không giới hạn thời lượng: viết đủ ý của bài; con số words/seconds chỉ là mốc tham khảo"
     }
   },
   "audiences": {

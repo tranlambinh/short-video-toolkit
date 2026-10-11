@@ -9,7 +9,7 @@ Yêu cầu: $ARGUMENTS
 ```
 /news-video <link> [<link> ...] [--audience trẻ|trung_niên] [--voice female|male]
 ```
-Một link làm một video; nhiều link làm hàng loạt (mỗi link một video). **Giọng đọc mặc định là nữ trẻ (`female-young`), đọc truyền cảm hơn các thể loại khác** (lên xuống giọng và đổi nhịp theo câu mạnh hơn khoảng 40%). `--audience trung_niên` đổi sang giọng trung niên điềm đạm; `--voice male` đổi sang giọng nam; `--audience none` dùng giọng gốc không chỉnh.
+Một link làm một video; nhiều link làm hàng loạt (mỗi link một video). **Giọng đọc mặc định là nữ trẻ (`female-young`), luôn đọc truyền cảm** (lên xuống giọng và đổi nhịp theo câu mạnh hơn khoảng 50%, áp dụng cho mọi giọng và độ tuổi). `--audience trung_niên` đổi sang giọng trung niên điềm đạm; `--voice male` đổi sang giọng nam; `--audience none` dùng giọng gốc không chỉnh.
 
 ## Khung hình (1080×1920)
 - **Tiêu đề bài báo** ở dải đầu khung (cao 230 px, tối đa 3 dòng).
@@ -38,7 +38,7 @@ Script mở từng bài trong Chrome ẩn (khung điện thoại), tắt popup �
 }
 ```
 - **Quy tắc nội dung (bắt buộc):** chỉ dùng thông tin có trong bài; không thêm số liệu, bối cảnh hay nhận định của riêng mình; giữ giọng trung lập; giữ nguyên số liệu, ngày tháng và tên riêng; nêu nguồn ("Theo VnExpress...") ở ít nhất một câu hoặc để chân trang ghi nguồn; tóm tắt bằng lời của mình, không chép nguyên văn cả đoạn. Bài tiếng Anh thì viết lời đọc và tiêu đề trên khung bằng tiếng Việt (dịch sát nghĩa tiêu đề gốc; ghi tiêu đề gốc trong báo cáo cho tôi). Số, ngày, phần trăm viết bằng chữ ("tám tháng mười", "không phẩy hai phần trăm") vì giọng đọc không đọc được ký hiệu. Chủ đề nhạy cảm (tai nạn, tội phạm, nạn nhân, trẻ em): chỉ nêu sự kiện như bài đã đưa, không mô tả hình ảnh gây sốc, không suy đoán danh tính.
-- **Độ dài:** 6 cảnh, khoảng 130-160 từ (khoảng 40-55 giây). Cảnh đầu và cuối là `article`; các cảnh giữa là `stock`.
+- **Độ dài: không giới hạn thời lượng. Quan trọng là đủ ý của bài.** Đọc hết bài và đưa vào mọi ý chính: sự kiện, số liệu, các bên liên quan, bối cảnh, phản biện hoặc góc nhìn khác mà bài nêu, kết luận. Bài ngắn thì video ngắn, bài dài thì video dài (thường 6-12 cảnh, một hai câu mỗi cảnh). Cảnh đầu và cuối là `article`; xen thêm cảnh `article` ở giữa khi đang nói đúng đoạn có trong ảnh chụp; các cảnh còn lại là `stock`.
 - **`terms` cho cảnh `stock`:** 3 từ khóa tiếng Anh chung chung, cụ thể về hình ảnh (người làm việc, máy móc, thành phố...), tránh tên riêng, thương hiệu, người cụ thể. Đây là hình **minh họa**, không phải ảnh sự kiện; không chọn hình có thể làm người xem hiểu nhầm đó là cảnh thật của bài.
 
 **Bước 3. Cho tôi duyệt cả lô.** Hiển thị bảng: slug | tiêu đề | nguồn | số từ | ước tính thời lượng | ghi chú (bài bị chặn, popup, nhạy cảm, bài ý kiến). Kèm lời đọc từng bài. **Dừng lại chờ tôi duyệt hoặc sửa.**

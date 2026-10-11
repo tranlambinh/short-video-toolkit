@@ -70,6 +70,16 @@
       "pitch": -8,
       "volume": 0,
       "label": "English US male, middle-aged: deeper, steady"
+    },
+    "en-female": {
+      "engine": "edge",
+      "voice": "en-US-JennyNeural",
+      "label": "English US female"
+    },
+    "en-male": {
+      "engine": "edge",
+      "voice": "en-US-GuyNeural",
+      "label": "English US male"
     }
   }
 }
