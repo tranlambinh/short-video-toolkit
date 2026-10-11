@@ -76,6 +76,7 @@ Vài ví dụ khác:
 ```
 /short-video tâm sự: ai sẽ bên bạn khi mệt --trung_niên
 /short-video góc nhìn: áp lực đồng trang lứa --trẻ
+/short-video nhận định: https://vnexpress.net/<bài-báo> --trẻ
 /short-video tranh luận: nên nói thẳng hay nói khéo --trẻ
 /news-video <link báo nước ngoài> --voice male --audience trung_niên
 /clip-video https://www.youtube.com/watch?v=<id> --to vi

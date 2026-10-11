@@ -270,7 +270,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("spec", nargs="?")
     ap.add_argument("--list-voices", action="store_true", help="show the voice library (voices.json) and exit")
-    ap.add_argument("--genre", default=None, help="tranh-luan (default), info, tam-su, goc-nhin or news; picks the speaking pace and music")
+    ap.add_argument("--genre", default=None, help="tranh-luan (default), info, tam-su, goc-nhin, nhan-dinh or news; picks the speaking pace and music")
     ap.add_argument("--audience", default=None,
                     help="tre or trung-nien (accents optional: trẻ, trung_niên); picks the voice age and music")
     ap.add_argument("--dry-run", action="store_true", help="print the settings that would be used and stop")

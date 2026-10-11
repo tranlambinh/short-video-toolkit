@@ -4,6 +4,7 @@
   /short-video info: chủ đề --trung_niên       genre info,       audience trung-nien
   /short-video tâm sự: chủ đề --trung_niên     genre tam-su,     audience trung-nien
   /short-video góc nhìn: chủ đề --trẻ          genre goc-nhin,   audience tre
+  /short-video nhận định: chủ đề --trẻ         genre nhan-dinh,  audience tre
 
 The values live in profiles.json (and voices.json for the voices themselves).
 """

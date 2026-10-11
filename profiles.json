@@ -73,6 +73,24 @@
         60
       ]
     },
+    "nhan-dinh": {
+      "label": "Nhận định",
+      "aliases": [
+        "nhan dinh",
+        "assessment",
+        "commentary",
+        "binh luan"
+      ],
+      "rate": 6,
+      "words": [
+        150,
+        175
+      ],
+      "seconds": [
+        50,
+        60
+      ]
+    },
     "news": {
       "label": "Tin tức",
       "aliases": [
@@ -129,6 +147,10 @@
     "goc-nhin": {
       "tre": "Crystaline - Quincas Moreira.mp3",
       "trung-nien": "Hopeful - Nat Keefe.mp3"
+    },
+    "nhan-dinh": {
+      "tre": "Touch - Anno Domini Beats.mp3",
+      "trung-nien": "Crystaline - Quincas Moreira.mp3"
     },
     "news": {
       "tre": "Oh Please - Telecasted.mp3",
