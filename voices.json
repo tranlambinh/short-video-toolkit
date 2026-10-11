@@ -1,0 +1,75 @@
+{
+  "_help": "Mỗi giọng là một khóa dùng với --voice. engine: edge (cần internet) hoặc piper (chạy offline). rate (%), pitch (Hz), volume (%) là độ lệch cộng thêm vào cách đọc từng câu. f0 là cao độ trung bình của giọng piper, dùng để đổi Hz thành tỉ lệ dịch cao độ.",
+  "voices": {
+    "female": {
+      "engine": "edge",
+      "voice": "vi-VN-HoaiMyNeural",
+      "label": "Nữ mặc định (HoaiMy, giọng gốc)"
+    },
+    "male": {
+      "engine": "edge",
+      "voice": "vi-VN-NamMinhNeural",
+      "label": "Nam mặc định (NamMinh, giọng gốc)"
+    },
+    "female-young": {
+      "engine": "edge",
+      "voice": "vi-VN-HoaiMyNeural",
+      "rate": 6,
+      "pitch": 14,
+      "volume": 4,
+      "label": "Nữ trẻ trung: cao hơn, nhanh hơn, tươi sáng"
+    },
+    "female-mature": {
+      "engine": "edge",
+      "voice": "vi-VN-HoaiMyNeural",
+      "rate": -8,
+      "pitch": -18,
+      "volume": -2,
+      "label": "Nữ trung niên: trầm hơn, chậm rãi, điềm đạm"
+    },
+    "male-young": {
+      "engine": "edge",
+      "voice": "vi-VN-NamMinhNeural",
+      "rate": 6,
+      "pitch": 12,
+      "volume": 4,
+      "label": "Nam trẻ trung: cao hơn, nhanh hơn, năng động"
+    },
+    "male-mature": {
+      "engine": "edge",
+      "voice": "vi-VN-NamMinhNeural",
+      "rate": -8,
+      "pitch": -14,
+      "volume": -2,
+      "label": "Nam trung niên: trầm hơn, chậm rãi, vững vàng"
+    },
+    "piper-vais": {
+      "engine": "piper",
+      "model": "models/piper/vi_VN-vais1000-medium.onnx",
+      "f0": 246,
+      "label": "Piper offline: VAIS1000 (giọng nữ, chất lượng tốt nhất trong ba giọng Piper)",
+      "length_scale": 1.45
+    },
+    "piper-25h": {
+      "engine": "piper",
+      "model": "models/piper/vi_VN-25hours_single-low.onnx",
+      "f0": 219,
+      "label": "Piper offline: 25hours (chất lượng thấp hơn)"
+    },
+    "piper-vivos-male": {
+      "engine": "piper",
+      "model": "models/piper/vi_VN-vivos-x_low.onnx",
+      "speaker": 2,
+      "f0": 143,
+      "label": "Piper offline: VIVOS giọng nam (thử nghiệm, nghe kém nhất)"
+    },
+    "en-male-mature": {
+      "engine": "edge",
+      "voice": "en-US-GuyNeural",
+      "rate": -6,
+      "pitch": -8,
+      "volume": 0,
+      "label": "English US male, middle-aged: deeper, steady"
+    }
+  }
+}

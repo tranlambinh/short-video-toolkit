@@ -1,0 +1,115 @@
+{
+  "_help": "Thể loại + đối tượng quyết định giọng đọc, tốc độ và nhạc nền. Khóa dùng trong lệnh: thể loại tranh-luan | info | tam-su, đối tượng tre | trung-nien (viết có dấu hay không đều được: trẻ, trung_niên). Giọng: audiences.voice_age ghép với giới tính (female/male) thành female-young, male-mature... trong voices.json. Muốn đổi nhạc hoặc nhịp, sửa ở đây; file kịch bản có thể ghi đè bằng các trường rate, music, voice.",
+  "defaults": {
+    "genre": "tranh-luan",
+    "audience": "tre",
+    "_note": "mặc định của lệnh /short-video khi không ghi thể loại hoặc đối tượng; script chỉ dùng thể loại mặc định, còn kịch bản không ghi đối tượng thì giữ giọng cũ"
+  },
+  "genres": {
+    "tranh-luan": {
+      "label": "Tranh luận",
+      "aliases": [
+        "tranh luan",
+        "debate"
+      ],
+      "rate": 10,
+      "words": [
+        110,
+        135
+      ],
+      "seconds": [
+        30,
+        45
+      ]
+    },
+    "info": {
+      "label": "Thông tin",
+      "aliases": [
+        "thong tin",
+        "thong-tin",
+        "information"
+      ],
+      "rate": 8,
+      "words": [
+        160,
+        180
+      ],
+      "seconds": [
+        52,
+        58
+      ]
+    },
+    "tam-su": {
+      "label": "Tâm sự",
+      "aliases": [
+        "tam su",
+        "confession"
+      ],
+      "rate": 3,
+      "words": [
+        130,
+        155
+      ],
+      "seconds": [
+        46,
+        55
+      ]
+    },
+    "news": {
+      "label": "Tin tức",
+      "aliases": [
+        "tin tuc",
+        "tin",
+        "news"
+      ],
+      "rate": 8,
+      "words": [
+        120,
+        160
+      ],
+      "seconds": [
+        38,
+        58
+      ],
+      "express": 1.4
+    }
+  },
+  "audiences": {
+    "tre": {
+      "label": "Trẻ (khoảng 18-30 tuổi)",
+      "aliases": [
+        "young",
+        "gen z",
+        "genz"
+      ],
+      "voice_age": "young"
+    },
+    "trung-nien": {
+      "label": "Trung niên (khoảng 40-55 tuổi)",
+      "aliases": [
+        "trung nien",
+        "mature",
+        "middle aged"
+      ],
+      "voice_age": "mature"
+    }
+  },
+  "music": {
+    "tranh-luan": {
+      "tre": "Oh Please - Telecasted.mp3",
+      "trung-nien": "Hopeful - Nat Keefe.mp3"
+    },
+    "info": {
+      "tre": "Touch - Anno Domini Beats.mp3",
+      "trung-nien": "Crystaline - Quincas Moreira.mp3"
+    },
+    "tam-su": {
+      "tre": "Final Soliloquy - Asher Fulero.mp3",
+      "trung-nien": "No.2 Remembering Her - Esther Abrami.mp3"
+    },
+    "news": {
+      "tre": "Oh Please - Telecasted.mp3",
+      "trung-nien": "Crystaline - Quincas Moreira.mp3"
+    }
+  }
+}

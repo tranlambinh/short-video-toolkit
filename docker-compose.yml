@@ -1,0 +1,16 @@
+services:
+  short-video-maker:
+    image: gyoridavid/short-video-maker:latest
+    container_name: short-video-maker
+    command: ["node", "dist/index.js"]
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - LOG_LEVEL=info
+      - CONCURRENCY=1
+      - VIDEO_CACHE_SIZE_IN_BYTES=2097152000
+    ports:
+      - "3123:3123"
+    volumes:
+      - ./videos:/app/data/videos
+      - ./patch/PortraitVideo.js:/app/dist/components/videos/PortraitVideo.js:ro

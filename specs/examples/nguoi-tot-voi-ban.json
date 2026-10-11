@@ -1,0 +1,32 @@
+{
+  "slug": "nguoi-tot-voi-ban",
+  "voice": "vi-VN-HoaiMyNeural",
+  "rate": "+10%",
+  "music": "Hopeful - Nat Keefe.mp3",
+  "scenes": [
+    {
+      "vi": "Người tốt với bạn là người nói điều bạn muốn nghe, hay điều bạn cần nghe?",
+      "terms": ["two friends talking cafe", "woman listening friend", "friends sitting together couch"]
+    },
+    {
+      "vi": "Một số người cho rằng: người tốt luôn ở bên, ủng hộ mình vô điều kiện.",
+      "terms": ["friend comforting hugging", "hand on shoulder comfort", "woman encouraging friend"]
+    },
+    {
+      "vi": "Khi đời đã nặng nề, một cái vỗ vai nâng đỡ hơn mọi lời phân tích. Mình cần một chỗ để được là chính mình.",
+      "terms": ["woman smiling relaxed home", "friends laughing together living room", "mother hugging daughter"]
+    },
+    {
+      "vi": "Song cũng có tiếng nói cho rằng: người tốt là người dám nói thật, kể cả khi lời ấy khó nghe.",
+      "terms": ["serious conversation friends", "mentor talking young man", "woman talking honestly friend"]
+    },
+    {
+      "vi": "Khen thì ai cũng làm được, nhưng nhắc bạn trước khi quá muộn cần cả lòng can đảm lẫn sự quan tâm.",
+      "terms": ["man giving advice friend", "friends discussing laptop", "teacher mentoring student"]
+    },
+    {
+      "vi": "Có lẽ người tốt nhất biết lúc nào cần ôm, lúc nào cần nhắc. Còn bạn nghiêng về cách nào? Kể về một người ấy bên dưới nhé!",
+      "terms": ["friends walking together sunset", "family dinner smiling", "people hugging happy"]
+    }
+  ]
+}

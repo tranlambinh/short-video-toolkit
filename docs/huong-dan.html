@@ -1,0 +1,880 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+<title>Bộ công cụ Short Video</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* Layout concept: a manual laid out like a studio rack. One purple accent, taken from the karaoke captions the tools produce.
+   Tabs switch between the four tools; every tool page has a live command builder and, where it helps, a phone diagram. */
+:root {
+  --bg: #f7f6fa; --surface: #ffffff; --surface2: #efedf5; --fg: #1d1a29; --muted: #5d5871; --line: #d9d5e6;
+  --accent: #6d28d9; --accent-fg: #ffffff; --accent-soft: #ece3fb; --karaoke: #b44cff;
+  --ok: #1d7a4b; --warn: #8f5600; --code-bg: #17141f; --code-fg: #ece8f8; --code-muted: #9d96b6;
+  --font: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: ui-monospace, "Cascadia Mono", "SF Mono", Consolas, "Liberation Mono", monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #13111a; --surface: #1b1824; --surface2: #251f33; --fg: #ece9f5; --muted: #a8a3bd; --line: #342e47;
+    --accent: #c18bff; --accent-fg: #1a1026; --accent-soft: #2c2145; --karaoke: #c777ff;
+    --ok: #6ad39b; --warn: #f0b35a; --code-bg: #0c0a11; --code-fg: #ece8f8; --code-muted: #8f88a8; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #13111a; --surface: #1b1824; --surface2: #251f33; --fg: #ece9f5; --muted: #a8a3bd; --line: #342e47;
+  --accent: #c18bff; --accent-fg: #1a1026; --accent-soft: #2c2145; --karaoke: #c777ff;
+  --ok: #6ad39b; --warn: #f0b35a; --code-bg: #0c0a11; --code-fg: #ece8f8; --code-muted: #8f88a8; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font); font-size: 16px; line-height: 1.65;
+  padding-inline: 16px; padding-block: 0 64px; }
+.wrap { max-width: 1040px; margin: 0 auto; }
+h1, h2, h3 { line-height: 1.25; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(1.9rem, 5vw, 2.8rem); font-weight: 800; letter-spacing: -0.02em; }
+h2 { font-size: 1.5rem; font-weight: 700; margin-bottom: 8px; }
+h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 6px; }
+p { margin: 0 0 12px; max-width: 70ch; }
+a { color: var(--accent); }
+code, .mono { font-family: var(--mono); font-size: 0.9em; }
+:not(pre) > code { background: var(--surface2); border: 1px solid var(--line); padding: 1px 6px; border-radius: 5px; overflow-wrap: anywhere; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+header.top { padding-block: 40px 20px; display: grid; gap: 14px; }
+.eyebrow { font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.lead { font-size: 1.1rem; color: var(--muted); max-width: 62ch; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { font-size: 0.82rem; padding: 3px 11px; border-radius: 99px; background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.theme { position: absolute; right: 0; top: 16px; }
+header.top .row { position: relative; }
+button { font: inherit; cursor: pointer; }
+.btn { border: 1px solid var(--line); background: var(--surface); color: var(--fg); border-radius: 8px; padding: 6px 12px; font-size: 0.88rem; font-weight: 600; }
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+
+nav.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line);
+  display: flex; gap: 4px; overflow-x: auto; padding-block: 8px; margin-inline: -16px; padding-inline: 16px; }
+nav.tabs button { border: 0; background: transparent; color: var(--muted); padding: 8px 14px; border-radius: 8px; font-weight: 600;
+  white-space: nowrap; font-size: 0.95rem; }
+nav.tabs button[aria-selected="true"] { background: var(--accent); color: var(--accent-fg); }
+nav.tabs button:not([aria-selected="true"]):hover { background: var(--surface2); color: var(--fg); }
+
+section.panel { padding-block: 28px 0; }
+.grid { display: grid; gap: 16px; }
+.cols-3 { grid-template-columns: repeat(auto-fit, minmax(min(250px, 100%), 1fr)); }
+.cols-2 { grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px; min-width: 0; }
+.card.click { cursor: pointer; text-align: left; width: 100%; color: inherit; font: inherit; }
+.card.click:hover { border-color: var(--accent); }
+.card .cmd { font-family: var(--mono); font-size: 1.05rem; font-weight: 700; color: var(--accent); margin-bottom: 4px; display: block; }
+.muted { color: var(--muted); }
+.small { font-size: 0.88rem; }
+
+.flow { display: flex; flex-wrap: wrap; gap: 10px; align-items: stretch; margin-block: 14px; }
+.flow .step { flex: 1 1 150px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; min-width: 0; }
+.flow .step b { display: block; font-size: 0.95rem; }
+.flow .arrow { align-self: center; color: var(--muted); font-weight: 700; }
+.stepper { display: grid; gap: 12px; margin-block: 14px; }
+.stepper .tabs-s { display: flex; gap: 8px; flex-wrap: wrap; }
+.stepper .tabs-s button { border: 1px solid var(--line); background: var(--surface); color: var(--fg); padding: 8px 14px; border-radius: 8px; font-weight: 600; }
+.stepper .tabs-s button[aria-selected="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.stepper .body { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; }
+.stepper .body ul { margin: 6px 0 0; padding-left: 1.2em; }
+.stepper .body li { margin-bottom: 4px; }
+
+pre.code { background: var(--code-bg); color: var(--code-fg); border-radius: 10px; padding: 14px 16px; margin: 0; overflow-x: auto;
+  font-family: var(--mono); font-size: 0.88rem; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
+.codebox { position: relative; }
+.codebox .copy { position: absolute; top: 8px; right: 8px; background: #2a2540; color: #ece8f8; border: 1px solid #443d63; font-size: 0.78rem; padding: 3px 10px; border-radius: 6px; }
+.codebox pre { padding-right: 76px; }
+.codebox .label { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 600; margin-bottom: 6px; display: block; }
+
+.builder { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: grid; gap: 18px; }
+.builder .fields { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(min(210px, 100%), 1fr)); align-items: start; }
+label.f { display: grid; gap: 4px; font-size: 0.86rem; font-weight: 600; min-width: 0; }
+label.f small { font-weight: 400; color: var(--muted); }
+input[type="text"], input[type="number"], select, textarea {
+  font: inherit; font-size: 0.95rem; width: 100%; background: var(--bg); color: var(--fg); border: 1px solid var(--line);
+  border-radius: 8px; padding: 8px 10px; min-width: 0; }
+input[type="range"] { width: 100%; accent-color: var(--accent); }
+.seg { display: flex; flex-wrap: wrap; gap: 6px; }
+.seg label { border: 1px solid var(--line); border-radius: 8px; padding: 6px 12px; font-weight: 600; font-size: 0.88rem; cursor: pointer; background: var(--bg); }
+.seg input { position: absolute; opacity: 0; pointer-events: none; }
+.seg label:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.seg label:has(input:focus-visible) { outline: 3px solid var(--accent); outline-offset: 2px; }
+.outs { display: grid; gap: 14px; }
+.result { display: grid; gap: 10px; }
+.result ul { margin: 0; padding-left: 1.2em; }
+.result li { margin-bottom: 3px; }
+.badge { display: inline-block; font-size: 0.78rem; padding: 1px 9px; border-radius: 99px; background: var(--surface2); border: 1px solid var(--line); font-weight: 600; }
+
+table { border-collapse: collapse; width: 100%; font-size: 0.92rem; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+
+.split { display: grid; gap: 22px; grid-template-columns: minmax(0, 1fr) 260px; align-items: start; }
+@media (max-width: 760px) { .split { grid-template-columns: 1fr; } }
+.phonewrap { display: grid; justify-items: center; gap: 8px; }
+.phone { position: relative; width: 200px; aspect-ratio: 9 / 16; border-radius: 22px; border: 6px solid #2b2638; overflow: hidden;
+  background: linear-gradient(170deg, #4a5a7a 0%, #2c3550 55%, #1b2133 100%); max-width: 100%; }
+.phone .mark { position: absolute; left: 0; right: 0; border-top: 1.5px dashed #ffd36a; }
+.phone .mark span { position: absolute; right: 4px; top: 2px; font-size: 9px; color: #ffd36a; font-family: var(--mono); }
+.phone .guide { position: absolute; left: 6px; width: 0; border-left: 1.5px dashed #7be0a8; }
+.phone .guide span { position: absolute; left: 6px; top: 50%; transform: translateY(-50%); font-size: 9px; color: #7be0a8; font-family: var(--mono); white-space: nowrap; }
+.phone .cap { position: absolute; left: 6%; right: 6%; text-align: center; font-weight: 800; font-size: 9.5px; line-height: 1.35; color: #fff;
+  text-shadow: 0 0 2px #000, 0 0 2px #000, 1px 1px 2px #000; }
+.phone .cap .w { transition: color 0.15s; }
+.phone .cap .w.sung { color: var(--karaoke); }
+.phone .logo { position: absolute; background: #fff; border-radius: 4px; display: grid; place-items: center; font-size: 8px; font-weight: 800; color: #6d28d9; border: 2px solid #6d28d9; }
+.legend { font-size: 0.8rem; color: var(--muted); text-align: center; max-width: 230px; }
+
+details { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 0 16px; margin-bottom: 10px; }
+summary { cursor: pointer; padding: 12px 0; font-weight: 600; }
+details[open] summary { border-bottom: 1px solid var(--line); margin-bottom: 10px; }
+details > div { padding-bottom: 12px; }
+.tree { font-family: var(--mono); font-size: 0.86rem; line-height: 1.8; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; overflow-x: auto; white-space: pre; }
+.note { border-left: 4px solid var(--warn); background: var(--surface2); padding: 10px 14px; border-radius: 0 8px 8px 0; font-size: 0.92rem; margin-block: 12px; }
+.note.ok { border-left-color: var(--ok); }
+.sampleList { display: grid; gap: 10px; }
+.sample { display: flex; gap: 10px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+.sample code { flex: 1; min-width: 0; background: none; border: 0; padding: 0; font-size: 0.88rem; overflow-wrap: anywhere; }
+.sample .btn { flex: none; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+<header class="top">
+  <div class="row">
+    <div class="eyebrow">Tài liệu hướng dẫn · năm lệnh trong Claude Code</div>
+    <button class="btn theme" id="themeBtn" type="button" aria-label="Đổi giao diện sáng tối">Sáng / Tối</button>
+  </div>
+  <h1>Bộ công cụ Short Video</h1>
+  <p class="lead">Từ một chủ đề đến video dọc 9:16 cho TikTok, Reels, Shorts: viết bài, soạn kịch bản, lấy hình, đọc giọng, gắn phụ đề karaoke tím. Ngoài ra còn chỉnh video có sẵn và tự tạo phụ đề cho video bất kỳ.</p>
+  <div class="chips"><span class="chip">1080×1920 H.264</span><span class="chip">Phụ đề karaoke tím</span><span class="chip">Giọng Việt edge-tts</span><span class="chip">Whisper medium</span></div>
+</header>
+
+<nav class="tabs" role="tablist" aria-label="Các phần của tài liệu">
+  <button role="tab" id="t-tong-quan" aria-selected="true" data-tab="tong-quan">Tổng quan</button>
+  <button role="tab" id="t-short-video" aria-selected="false" data-tab="short-video">/short-video</button>
+  <button role="tab" id="t-edit-video" aria-selected="false" data-tab="edit-video">/edit-video</button>
+  <button role="tab" id="t-auto-subtitle" aria-selected="false" data-tab="auto-subtitle">/auto-subtitle</button>
+  <button role="tab" id="t-news-video" aria-selected="false" data-tab="news-video">/news-video</button>
+  <button role="tab" id="t-clip-video" aria-selected="false" data-tab="clip-video">/clip-video</button>
+  <button role="tab" id="t-he-thong" aria-selected="false" data-tab="he-thong">Thư mục &amp; yêu cầu</button>
+</nav>
+
+<!-- ============ TỔNG QUAN ============ -->
+<section class="panel" id="p-tong-quan" role="tabpanel" aria-labelledby="t-tong-quan">
+  <h2>Chọn lệnh theo việc cần làm</h2>
+  <p class="muted">Bấm vào thẻ để xem hướng dẫn chi tiết và công cụ dựng lệnh.</p>
+  <div class="grid cols-3">
+    <button class="card click" data-go="short-video"><span class="cmd">/short-video</span><h3>Tạo video từ chủ đề</h3><p class="small muted">Claude viết bài fanpage, soạn kịch bản, bạn duyệt rồi script dựng video có giọng đọc hoặc nhạc nền, phụ đề karaoke.</p><span class="badge">Cần Docker</span></button>
+    <button class="card click" data-go="edit-video"><span class="cmd">/edit-video</span><h3>Chỉnh video có sẵn</h3><p class="small muted">Cắt, ghép có chuyển cảnh, đổi tốc độ, mờ dần, zoom chậm, chèn logo. Không sửa file gốc.</p><span class="badge">Chỉ cần ffmpeg</span></button>
+    <button class="card click" data-go="auto-subtitle"><span class="cmd">/auto-subtitle</span><h3>Phụ đề tự động</h3><p class="small muted">Nghe video, chép lời tiếng Việt hoặc Anh, soát lỗi, dịch nếu cần, gắn phụ đề karaoke.</p><span class="badge">Whisper medium</span></button>
+    <button class="card click" data-go="news-video"><span class="cmd">/news-video</span><h3>Short từ link bài báo</h3><p class="small muted">Dán một hoặc nhiều link báo. Mỗi bài thành một video: tiêu đề ở đầu khung, ảnh chụp bài báo, hình minh họa, giọng đọc tóm tắt, chân trang ghi nguồn.</p><span class="badge">Làm hàng loạt</span></button>
+    <button class="card click" data-go="clip-video"><span class="cmd">/clip-video</span><h3>Cắt short từ video dài</h3><p class="small muted">Dán link YouTube, Drive hoặc đường dẫn file. Claude đọc bản chép lời, đề xuất thông điệp chính, bạn chọn clip nào làm.</p><span class="badge">Video ngang 15–30 phút</span></button>
+  </div>
+
+  <h2 style="margin-top:32px">Chúng nối với nhau thế nào</h2>
+  <div class="flow" aria-label="Quy trình làm việc">
+    <div class="step"><b>Chủ đề</b><span class="small muted">một câu hỏi, một ý tưởng</span></div><span class="arrow">→</span>
+    <div class="step"><b>/short-video</b><span class="small muted">bài, kịch bản, video</span></div><span class="arrow">→</span>
+    <div class="step"><b>/edit-video</b><span class="small muted">logo, cắt, hiệu ứng</span></div><span class="arrow">→</span>
+    <div class="step"><b>Đăng</b><span class="small muted">TikTok · Reels · Shorts</span></div>
+  </div>
+  <p class="small muted">Có video quay sẵn của riêng bạn thì đi đường khác: <b>/auto-subtitle</b> để thêm phụ đề, rồi <b>/edit-video</b> để thêm logo.</p>
+
+  <h2 style="margin-top:32px">Phụ đề trông thế nào</h2>
+  <div class="split">
+    <div>
+      <p>Chữ trắng chuyển tím theo từng từ, viền đen, tối đa hai dòng. Dòng đầu luôn nằm ở một độ cao cố định, nên phụ đề một dòng hay hai dòng đều không nhảy lên xuống.</p>
+      <div class="note ok">Độ cao mặc định: mép trên của dòng đầu cách đáy video <b>676 px</b> (35,2% chiều cao) trên khung 1080×1920. Trong thực tế, vùng đáy 15–20% hay bị giao diện nền tảng che, nên phụ đề đặt cao hơn vùng đó.</div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap"><button class="btn primary" id="kPlay" type="button">Tạm dừng</button><button class="btn" id="kLines" type="button">Đổi 1 dòng / 2 dòng</button></div>
+    </div>
+    <div class="phonewrap">
+      <div class="phone" id="phoneDemo" aria-label="Minh họa vị trí phụ đề trên video dọc">
+        <div class="mark" style="top:64.8%"><span>y = 1244</span></div>
+        <div class="guide" style="top:64.8%; bottom:0"><span>676 px</span></div>
+        <div class="cap" id="kCap" style="top:64.8%"></div>
+      </div>
+      <div class="legend">Đường vàng: mép trên dòng đầu. Đường xanh: khoảng cách tới đáy.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SHORT-VIDEO ============ -->
+<section class="panel" id="p-short-video" role="tabpanel" aria-labelledby="t-short-video" hidden>
+  <h2>/short-video: từ chủ đề đến video</h2>
+  <p>Quy trình ba bước. Sau bước 1 và bước 2, Claude dừng lại chờ bạn duyệt. Chỉ khi bạn đồng ý mới tốn 6–10 phút để dựng video.</p>
+
+  <div class="stepper" id="stepper">
+    <div class="tabs-s" role="tablist" aria-label="Ba bước">
+      <button role="tab" aria-selected="true" data-step="0">1. Bài fanpage</button>
+      <button role="tab" aria-selected="false" data-step="1">2. Kịch bản</button>
+      <button role="tab" aria-selected="false" data-step="2">3. Video</button>
+    </div>
+    <div class="body" id="stepBody"></div>
+  </div>
+
+  <h2 style="margin-top:28px">Cú pháp thống nhất</h2>
+  <pre class="code">/short-video &lt;thể loại&gt;: &lt;chủ đề&gt; --&lt;đối tượng&gt; [--voice female|male] [--mode voice|music|both]</pre>
+  <p style="margin-top:10px">Thể loại là chữ trước dấu <code>:</code> đầu tiên (<code>tranh luận</code>, <code>info</code>, <code>tâm sự</code>; không có thì mặc định tranh luận). Đối tượng là <code>--trẻ</code> hoặc <code>--trung_niên</code> (mặc định trẻ). <code>--voice</code> chọn giới tính giọng; ghép với đối tượng thành giọng cụ thể.</p>
+  <h3 style="margin-top:18px">Thể loại và đối tượng quyết định gì</h3>
+  <div class="tablewrap"><table>
+    <tr><th>Thể loại</th><th>Đối tượng</th><th>Giọng (nữ / nam)</th><th>Tốc độ gốc</th><th>Nhạc nền</th><th>Độ dài</th></tr>
+    <tr><td>tranh luận</td><td>trẻ</td><td><code>female-young</code> / <code>male-young</code></td><td>+10%</td><td>Oh Please</td><td>30–45 s · 110–135 từ</td></tr>
+    <tr><td>tranh luận</td><td>trung niên</td><td><code>female-mature</code> / <code>male-mature</code></td><td>+10%</td><td>Hopeful</td><td>30–45 s · 110–135 từ</td></tr>
+    <tr><td>info</td><td>trẻ</td><td>như trên</td><td>+8%</td><td>Touch</td><td>52–58 s · 160–180 từ</td></tr>
+    <tr><td>info</td><td>trung niên</td><td>như trên</td><td>+8%</td><td>Crystaline</td><td>52–58 s · 160–180 từ</td></tr>
+    <tr><td>tâm sự</td><td>trẻ</td><td>như trên</td><td>+3%</td><td>Final Soliloquy</td><td>46–55 s · 130–155 từ</td></tr>
+    <tr><td>tâm sự</td><td>trung niên</td><td>như trên</td><td>+3%</td><td>No.2 Remembering Her</td><td>46–55 s · 130–155 từ</td></tr>
+  </table></div>
+  <p class="small muted" style="margin-top:10px">Giọng trẻ nhanh và cao hơn, giọng trung niên chậm và trầm hơn (cộng thêm vào tốc độ gốc). Nhạc chọn theo tâm trạng ghi trong thư viện, chưa nghe thử từng bài; đổi ở <code>profiles.json</code>.</p>
+  <div class="grid cols-2" style="margin-top:14px">
+    <div class="card"><h3>Văn phong trẻ</h3><p class="small">Xưng "bạn" và "mình", câu ngắn khoảng 8–14 chữ, hook trực diện gây tò mò, từ ngữ đời thường và hiện đại, không giáo huấn. Ví dụ gần gũi: công việc đầu tiên, mạng xã hội, thuê nhà, hẹn hò. Bài đăng 2–5 emoji; hình người 20–30 tuổi.</p></div>
+    <div class="card"><h3>Văn phong trung niên</h3><p class="small">Xưng "bạn" hoặc "chúng ta", câu dài hơn khoảng 12–20 chữ, nhịp chậm, điềm đạm, giàu trải nghiệm. Ví dụ gần gũi: gia đình, con cái, cha mẹ già, sức khỏe, tài chính. Bài đăng 0–2 emoji; hình người 40–55 tuổi, ánh sáng ấm.</p></div>
+  </div>
+  <h3 style="margin-top:18px">Ba thể loại</h3>
+  <div class="grid cols-3">
+    <div class="card"><h3>Tranh luận</h3><p class="small">Đóng khung hai quan điểm đối lập để khán giả bình luận chọn bên. Bài là văn xuôi, không nhãn "phe". Kịch bản: Hook, quan điểm thứ nhất, quan điểm thứ hai, câu hỏi mở.</p></div>
+    <div class="card"><h3>Info</h3><p class="small">Bài 4–5 ý có tiêu đề và emoji, kết bằng câu hỏi. Mỗi ý một cảnh ngắn trong video.</p></div>
+    <div class="card"><h3>Tâm sự</h3><p class="small">Giọng kể xưng "mình", ấm và chậm, không khuyên răn, không bịa chi tiết đời tư. Kết bằng câu hỏi nhẹ mời chia sẻ.</p></div>
+  </div>
+  <details style="margin-top:14px"><summary>Luật an toàn của chế độ tranh luận</summary><div>
+    <ul><li>Người viết giữ vai trung lập, không nghiêng hẳn về bên nào, không miệt thị bên còn lại.</li>
+    <li>Không kích động thù oán vùng miền, sắc tộc, tôn giáo.</li>
+    <li>Không công kích cá nhân, chỉ bàn quan điểm.</li>
+    <li>Không chốt đúng sai tuyệt đối, luôn kết bằng câu hỏi ngỏ.</li>
+    <li>Hai bên đều có lập luận thuyết phục và dài tương đương, không bịa số liệu.</li>
+    <li>Không dùng tài khoản phụ để gài bình luận giả. Chỉ nên ghim một bình luận thật có chất lượng.</li></ul></div></details>
+
+  <h2 style="margin-top:28px">Dựng lệnh</h2>
+  <div class="builder" id="svBuilder">
+    <div class="fields">
+      <label class="f" style="grid-column: 1 / -1">Chủ đề<input type="text" id="svTopic" value="Chia đôi tiền khi hẹn hò: văn minh hay chi ly?"></label>
+      <div class="f">Thể loại
+        <div class="seg" id="svKind"><label><input type="radio" name="svKind" value="debate" checked>Tranh luận</label><label><input type="radio" name="svKind" value="info">Info</label><label><input type="radio" name="svKind" value="confess">Tâm sự</label></div></div>
+      <div class="f">Đối tượng <small>--trẻ / --trung_niên</small>
+        <div class="seg" id="svAud"><label><input type="radio" name="svAud" value="tre" checked>Trẻ</label><label><input type="radio" name="svAud" value="trung_nien">Trung niên</label></div></div>
+      <div class="f">Chế độ video <small>--mode</small>
+        <div class="seg" id="svMode"><label><input type="radio" name="svMode" value="voice" checked>Có giọng đọc</label><label><input type="radio" name="svMode" value="music">Nhạc lớn</label><label><input type="radio" name="svMode" value="both">Cả hai</label></div></div>
+      <div class="f">Giọng đọc <small>--voice</small>
+        <div class="seg" id="svVoice"><label><input type="radio" name="svVoice" value="female" checked>Nữ</label><label><input type="radio" name="svVoice" value="male">Nam</label><label><input type="radio" name="svVoice" value="piper-vais">Piper offline (nữ)</label></div></div>
+    </div>
+    <div class="outs">
+      <div class="codebox"><span class="label">Gõ trong Claude Code</span><pre class="code" id="svCmd"></pre><button class="copy" type="button" data-copy="svCmd">Chép</button></div>
+      <div class="codebox"><span class="label">Hoặc chạy script trực tiếp (sau khi đã có specs/&lt;slug&gt;.json)</span><pre class="code" id="svScript"></pre><button class="copy" type="button" data-copy="svScript">Chép</button></div>
+      <div class="result"><b>File sẽ tạo trong <code>videos/&lt;slug&gt;/</code></b><ul id="svFiles"></ul><p class="small muted" id="svNote"></p></div>
+    </div>
+  </div>
+
+  <h2 style="margin-top:28px">Tham số</h2>
+  <div class="tablewrap"><table>
+    <tr><th>Tham số</th><th>Giá trị</th><th>Mặc định</th><th>Ý nghĩa</th></tr>
+    <tr><td><code>--trẻ</code> · <code>--trung_niên</code></td><td>đối tượng</td><td>trẻ</td><td>quyết định tuổi giọng, văn phong, nhạc; ghi trong kịch bản là <code>"audience"</code></td></tr>
+    <tr><td><code>--mode</code></td><td>voice · music · both</td><td>voice</td><td>có giọng đọc · nhạc lớn không giọng · cả hai bản</td></tr>
+    <tr><td><code>--voice</code></td><td>female · male · khóa trong <code>voices.json</code></td><td>female</td><td>female/male chọn giới tính rồi ghép với đối tượng; khóa khác (ví dụ <code>piper-vais</code>) dùng đúng giọng đó</td></tr>
+    <tr><td><code>--genre</code>, <code>--audience</code>, <code>--dry-run</code></td><td>(chỉ script)</td><td>theo kịch bản</td><td>đổi thể loại hoặc đối tượng tạm thời; <code>--dry-run</code> in giá trị sẽ dùng rồi dừng</td></tr>
+    <tr><td><code>--reuse-footage</code></td><td>(cờ, chỉ script)</td><td>tắt</td><td>dựng lại giọng và phụ đề mà không tải lại clip hình</td></tr>
+    <tr><td><code>--skip-render</code></td><td>(cờ, chỉ script)</td><td>tắt</td><td>chỉ ghép lại (đổi nhạc, độ cao phụ đề), cần đủ file trung gian</td></tr>
+  </table></div>
+
+
+  <h2 style="margin-top:28px">Thư viện giọng</h2>
+  <div class="tablewrap"><table>
+    <tr><th>--voice</th><th>Loại</th><th>Mô tả</th></tr>
+    <tr><td><code>female</code>, <code>male</code></td><td>edge-tts (cần internet)</td><td>giọng gốc HoaiMy (nữ), NamMinh (nam)</td></tr>
+    <tr><td><code>female-young</code>, <code>male-young</code></td><td>edge-tts</td><td>trẻ trung: cao hơn, nhanh hơn, tươi sáng</td></tr>
+    <tr><td><code>female-mature</code>, <code>male-mature</code></td><td>edge-tts</td><td>trung niên: trầm hơn, chậm rãi, điềm đạm</td></tr>
+    <tr><td><code>piper-vais</code></td><td>Piper (offline)</td><td>giọng nữ, tốt nhất trong ba giọng Piper (Whisper nhận lại 97% câu mẫu)</td></tr>
+    <tr><td><code>piper-25h</code>, <code>piper-vivos-male</code></td><td>Piper (offline)</td><td>chất lượng thấp hơn (85%); giọng nam VIVOS là thử nghiệm</td></tr>
+    <tr><td>tên giọng edge-tts bất kỳ</td><td>edge-tts</td><td>ví dụ <code>en-US-AvaNeural</code> cho video tiếng Anh</td></tr>
+  </table></div>
+  <p class="small muted" style="margin-top:10px">Mọi giọng đều được chỉnh cao độ, tốc độ, âm lượng theo từng câu. Nghe thử bằng <code>python voice_demo.py --check</code> (file mẫu ở <code>videos/voice-samples/</code>). Thêm hoặc chỉnh giọng ở <code>voices.json</code>.</p>
+
+  <h2 style="margin-top:28px">Prompt mẫu</h2>
+  <div class="sampleList" id="svSamples"></div>
+
+  <details style="margin-top:20px"><summary>File kịch bản <code>specs/&lt;slug&gt;.json</code></summary><div>
+<pre class="code">{
+  "slug": "ten-ngan",
+  "genre": "tranh-luan",
+  "audience": "tre",
+  "scenes": [
+    {"vi": "Lời đọc cũng là phụ đề...",
+     "terms": ["english stock term", "another term", "third term"]}
+  ]
+}</pre>
+    <p class="small muted" style="margin-top:10px">Chỉ ghi <code>genre</code> và <code>audience</code>; giọng, tốc độ, nhạc lấy từ profile. Muốn đổi riêng thì thêm <code>rate</code>, <code>music</code> hoặc <code>voice</code> vào file. <code>terms</code> là từ khóa tiếng Anh để tìm clip trên Pexels, nên chọn hình cụ thể (người, đồ vật, cảnh vật), tránh khái niệm trừu tượng. <code>music</code> là tên file trong <code>assets/music</code> hoặc thư viện của short-video-maker.</p>
+  </div></details>
+  <details><summary>Giọng đọc biểu cảm theo câu</summary><div>
+    <p>Script đọc từng câu riêng với tốc độ, cao độ, âm lượng khác nhau theo ý nghĩa rồi nối bằng quãng nghỉ: câu hỏi chậm hơn, cao hơn, nghỉ lâu hơn; câu cảm thán sáng và to hơn; câu mở đầu cao nhẹ; câu cuối chậm và trầm để ấm hơn. Muốn giọng đều, thêm <code>"expressive": false</code> vào file kịch bản.</p>
+    <p class="small muted">edge-tts đôi khi trả lỗi <code>NoAudioReceived</code> cho một câu cụ thể. Script tự thử lại với tốc độ và cao độ lệch vài đơn vị, tai người gần như không phân biệt được.</p></div></details>
+</section>
+
+<!-- ============ EDIT-VIDEO ============ -->
+<section class="panel" id="p-edit-video" role="tabpanel" aria-labelledby="t-edit-video" hidden>
+  <h2>/edit-video: chỉnh video có sẵn</h2>
+  <p>Dùng ffmpeg, không cần Docker. File gốc không bao giờ bị sửa; kết quả ghi vào <code>videos/edited/</code>. Tick các hiệu ứng bên dưới để lệnh và hình minh họa cập nhật ngay.</p>
+
+  <div class="builder" id="evBuilder">
+    <div class="split">
+      <div class="grid" style="gap:14px">
+        <div class="fields">
+          <label class="f">Video đầu vào<input type="text" id="evIn" value="videos/a.mp4"><small>Thêm video thứ hai để ghép, ngăn cách bằng dấu cách</small></label>
+          <label class="f">Tên file kết quả <small id="evOutHint">hoặc thư mục khi làm hàng loạt</small><input type="text" id="evOut" value="videos/edited/ket-qua.mp4"></label>
+          <label class="f" style="grid-column:1/-1"><span><input type="checkbox" id="evBatch"> Hàng loạt: xử lý riêng từng video (đầu vào là thư mục hoặc dạng <code>videos/*.mp4</code>), cùng một cài đặt</span></label>
+        </div>
+        <div class="fields">
+          <label class="f">Cắt từ (giây)<input type="text" id="evTrimA" placeholder="vd 5"></label>
+          <label class="f">Cắt đến (giây)<input type="text" id="evTrimB" placeholder="vd 40"></label>
+          <label class="f">Chuyển cảnh khi ghép (giây)<input type="number" id="evTrans" min="0" max="3" step="0.1" value="0"></label>
+          <label class="f">Tốc độ <span id="evSpeedV" class="mono">1.0×</span><input type="range" id="evSpeed" min="0.5" max="2" step="0.05" value="1"></label>
+          <label class="f">Mờ dần vào (giây)<input type="number" id="evFi" min="0" max="3" step="0.1" value="0"></label>
+          <label class="f">Mờ dần ra (giây)<input type="number" id="evFo" min="0" max="3" step="0.1" value="0"></label>
+          <label class="f">Zoom chậm <span id="evZoomV" class="mono">tắt</span><input type="range" id="evZoom" min="1" max="1.4" step="0.02" value="1"></label>
+        </div>
+        <div class="fields">
+          <label class="f" style="grid-column:1/-1"><span><input type="checkbox" id="evLogoOn"> Chèn logo</span></label>
+          <label class="f">File logo (PNG)<input type="text" id="evLogo" value="logo.png"></label>
+          <div class="f">Vị trí<select id="evPos"><option value="tl">Góc trái trên</option><option value="tr">Góc phải trên</option><option value="bl">Góc trái dưới</option><option value="br">Góc phải dưới</option><option value="c">Giữa</option></select></div>
+          <label class="f">Kích thước <span id="evSizeV" class="mono">14%</span><input type="range" id="evSize" min="5" max="40" step="1" value="14"></label>
+          <label class="f">Độ đậm <span id="evOpV" class="mono">100%</span><input type="range" id="evOp" min="0.2" max="1" step="0.05" value="1"></label>
+        </div>
+      </div>
+      <div class="phonewrap">
+        <div class="phone" id="evPhone"><div class="logo" id="evLogoBox" hidden>LOGO</div></div>
+        <div class="legend">Vị trí và kích thước logo trên khung 1080×1920 (minh họa).</div>
+      </div>
+    </div>
+    <div class="outs">
+      <div class="codebox"><span class="label">Gõ trong Claude Code</span><pre class="code" id="evSlash"></pre><button class="copy" type="button" data-copy="evSlash">Chép</button></div>
+      <div class="codebox"><span class="label">Hoặc chạy script trực tiếp</span><pre class="code" id="evCmd"></pre><button class="copy" type="button" data-copy="evCmd">Chép</button></div>
+    </div>
+  </div>
+
+  <h2 style="margin-top:28px">Tùy chọn</h2>
+  <div class="tablewrap"><table>
+    <tr><th>Việc</th><th>Tùy chọn</th><th>Ghi chú</th></tr>
+    <tr><td>Cắt</td><td><code>--trim 5-40</code></td><td>mỗi video một <code>--trim</code> theo thứ tự, <code>-</code> là giữ nguyên; thời gian dạng <code>12.5</code> hoặc <code>1:05</code></td></tr>
+    <tr><td>Ghép</td><td>nhiều file, <code>--transition 0.6</code></td><td>chuyển cảnh mờ giữa các clip; bỏ cờ này để cắt thẳng</td></tr>
+    <tr><td>Kích thước</td><td><code>--size 1080x1920</code>, <code>--fit cover|contain</code></td><td><code>cover</code> cắt tràn khung, <code>contain</code> thêm viền đen</td></tr>
+    <tr><td>Tốc độ</td><td><code>--speed 1.2</code></td><td>0,5 đến 4, cả hình và tiếng</td></tr>
+    <tr><td>Mờ dần</td><td><code>--fade-in</code>, <code>--fade-out</code></td><td>cả hình và tiếng</td></tr>
+    <tr><td>Zoom chậm</td><td><code>--zoom 1.12</code></td><td>phóng từ 1,0× lên mức đặt suốt video; chậm hơn trên video dài</td></tr>
+    <tr><td>Hàng loạt</td><td><code>--batch --suffix logo</code></td><td>nhiều video (file, thư mục, hoặc <code>*.mp4</code>), mỗi video xử lý riêng với cùng cài đặt; <code>-o</code> là thư mục kết quả; file lỗi chỉ bị báo</td></tr>
+    <tr><td>Logo</td><td><code>--logo --logo-pos --logo-size --logo-opacity --logo-margin</code></td><td><code>--logo-from</code> và <code>--logo-to</code> (giây) để chỉ hiện một đoạn</td></tr>
+  </table></div>
+  <div class="note">Logo nên là PNG nền trong. Trên TikTok và Reels, góc trên phải và vùng đáy hay bị giao diện che; góc trái trên thường an toàn hơn. Phụ đề cứng có sẵn trong video thì không gỡ được.</div>
+
+  <h2 style="margin-top:28px">Prompt mẫu</h2>
+  <div class="sampleList" id="evSamples"></div>
+</section>
+
+<!-- ============ AUTO-SUBTITLE ============ -->
+<section class="panel" id="p-auto-subtitle" role="tabpanel" aria-labelledby="t-auto-subtitle" hidden>
+  <h2>/auto-subtitle: phụ đề tự động</h2>
+  <p>Whisper medium chạy ngay trên CPU của bạn (khoảng 0,65 lần thời lượng video, nghĩa là video 1 phút mất khoảng 40 giây). Nhận dạng được tiếng Việt và tiếng Anh. Có bước soát lỗi vì không bản nhận dạng nào hoàn hảo.</p>
+
+  <div class="flow">
+    <div class="step"><b>1. Nhận dạng</b><span class="small muted">chép lời + mốc từng từ</span></div><span class="arrow">→</span>
+    <div class="step"><b>2. Soát lỗi</b><span class="small muted">Claude sửa, bạn duyệt</span></div><span class="arrow">→</span>
+    <div class="step"><b>3. Dịch</b><span class="small muted">nếu cần ngôn ngữ khác</span></div><span class="arrow">→</span>
+    <div class="step"><b>4. Dựng</b><span class="small muted">phụ đề karaoke tím</span></div>
+  </div>
+
+  <div class="builder" id="asBuilder">
+    <div class="fields">
+      <label class="f" style="grid-column:1/-1">Đường dẫn video<input type="text" id="asVideo" value="videos/clip.mp4"></label>
+      <div class="f">Ngôn ngữ trong video <small>--lang</small>
+        <div class="seg"><label><input type="radio" name="asLang" value="auto" checked>Tự nhận</label><label><input type="radio" name="asLang" value="vi">Tiếng Việt</label><label><input type="radio" name="asLang" value="en">Tiếng Anh</label></div></div>
+      <div class="f">Ngôn ngữ phụ đề <small>--to</small>
+        <div class="seg"><label><input type="radio" name="asTo" value="" checked>Giống video</label><label><input type="radio" name="asTo" value="vi">Tiếng Việt</label><label><input type="radio" name="asTo" value="en">Tiếng Anh</label></div></div>
+      <div class="f">Soát lỗi trước khi dựng
+        <div class="seg"><label><input type="radio" name="asRev" value="yes" checked>Có (khuyên dùng)</label><label><input type="radio" name="asRev" value="no">Bỏ qua <small>--no-review</small></label></div></div>
+    </div>
+    <div class="outs">
+      <div class="codebox"><span class="label">Gõ trong Claude Code</span><pre class="code" id="asSlash"></pre><button class="copy" type="button" data-copy="asSlash">Chép</button></div>
+      <div class="result"><b>Claude sẽ làm gì</b><ul id="asSteps"></ul></div>
+      <div class="codebox"><span class="label">Các lệnh script tương ứng</span><pre class="code" id="asCmd"></pre><button class="copy" type="button" data-copy="asCmd">Chép</button></div>
+    </div>
+  </div>
+
+  <h2 style="margin-top:28px">Kết quả</h2>
+  <div class="tablewrap"><table>
+    <tr><th>File</th><th>Nội dung</th></tr>
+    <tr><td><code>videos/auto-sub/&lt;tên&gt;-sub.mp4</code></td><td>video đã gắn phụ đề (file gốc không đổi)</td></tr>
+    <tr><td><code>work/auto-sub/&lt;tên&gt;/transcript.json</code></td><td>bản chép lời, có mốc từng từ; sửa chữ trực tiếp được, mốc từng từ tự chia lại</td></tr>
+    <tr><td><code>transcript.txt</code>, <code>subs.srt</code>, <code>subs.ass</code></td><td>bản đọc nhanh, phụ đề rời (không karaoke), phụ đề karaoke</td></tr>
+  </table></div>
+
+  <h2 style="margin-top:28px">Tham số</h2>
+  <div class="tablewrap"><table>
+    <tr><th>Tham số</th><th>Ý nghĩa</th></tr>
+    <tr><td><code>--lang vi|en|auto</code></td><td>ngôn ngữ trong video; ghi rõ thì nhận dạng chuẩn hơn</td></tr>
+    <tr><td><code>--to vi|en</code></td><td>(chỉ trong lệnh Claude) ngôn ngữ phụ đề; khác ngôn ngữ video thì Claude dịch bản chép lời</td></tr>
+    <tr><td><code>--no-review</code></td><td>(chỉ trong lệnh Claude) bỏ bước soát lỗi</td></tr>
+    <tr><td><code>--transcribe-only</code></td><td>(script) chỉ chép lời rồi dừng, để soát hoặc dịch</td></tr>
+    <tr><td><code>--transcript file.json</code></td><td>(script) dựng từ bản chép lời đã sửa hoặc đã dịch, không chạy lại Whisper</td></tr>
+    <tr><td><code>--out</code>, <code>--pos-y</code></td><td>(script) đường dẫn kết quả; độ cao dòng đầu theo tỉ lệ chiều cao (mặc định 0,647 cho video dọc, video ngang tự đặt thấp hơn)</td></tr>
+  </table></div>
+
+  <h2 style="margin-top:28px">Prompt mẫu</h2>
+  <div class="sampleList" id="asSamples"></div>
+
+  <div class="note">Nhận dạng tiếng Việt hay sai dấu và từ gần âm ("chia đôi" thành "chi đôi", "ngang hàng" thành "ngăn hàng"), và sai nhiều hơn khi có nhạc nền lớn, nhiều người nói chen nhau, giọng nặng, tên riêng. Các video thử của mình dùng giọng đọc máy sạch nên số lỗi thực tế sẽ nhiều hơn. Video đã có phụ đề cứng sẽ bị chồng chữ khi gắn thêm.</div>
+</section>
+
+
+
+<!-- ============ NEWS-VIDEO ============ -->
+<section class="panel" id="p-news-video" role="tabpanel" aria-labelledby="t-news-video" hidden>
+  <h2>/news-video: short từ link bài báo</h2>
+  <p>Giọng đọc mặc định là nữ trẻ, truyền cảm hơn các thể loại khác. Đưa vào một hoặc nhiều link bài báo. Mỗi bài thành một video dọc: tiêu đề bài báo ở đầu khung, ảnh chụp trang bài báo cuộn chậm xen hình minh họa, lời đọc tóm tắt trung lập, phụ đề karaoke tím, chân trang ghi nguồn.</p>
+
+  <div class="split">
+    <div>
+      <div class="flow">
+        <div class="step"><b>1. Lấy bài</b><span class="small muted">chụp ảnh, trích văn bản</span></div><span class="arrow">→</span>
+        <div class="step"><b>2. Viết lời đọc</b><span class="small muted">Claude tóm tắt từng bài</span></div><span class="arrow">→</span>
+        <div class="step"><b>3. Bạn duyệt</b><span class="small muted">cả lô một lần</span></div><span class="arrow">→</span>
+        <div class="step"><b>4. Dựng</b><span class="small muted">giọng, hình, phụ đề</span></div>
+      </div>
+      <ul>
+        <li><b>Tiêu đề (cao 230 px):</b> tiêu đề bài báo ở đầu khung.</li>
+        <li><b>Nội dung (cao 1210 px):</b> ảnh chụp trang bài báo cuộn chậm ở cảnh đầu và cuối, giữa là clip stock có nhãn "Hình minh họa".</li>
+        <li><b>Phụ đề:</b> karaoke tím, nằm phía trên chân trang.</li>
+        <li><b>Chân trang (cao 270 px):</b> "Nguồn: tên báo · ngày".</li>
+      </ul>
+    </div>
+    <div class="phonewrap">
+      <div class="phone" aria-label="Bố cục khung hình của video từ bài báo" style="background:#15102a">
+        <div style="position:absolute;left:0;right:0;top:0;height:12%;background:#241546;border-bottom:2px solid #b44cff;display:grid;place-items:center;text-align:center;color:#fff;font-size:9px;font-weight:700;line-height:1.3">Tiêu đề bài báo</div>
+        <div style="position:absolute;left:0;right:0;top:12%;height:63%;background:#f1efe9;display:grid;place-items:center;text-align:center;font-size:10px;color:#444;padding:8px;line-height:1.4">ẢNH CHỤP BÀI BÁO<br>và hình minh họa<br><span style="font-size:8px">1210 px</span></div>
+        <div style="position:absolute;left:0;right:0;top:76.8%;height:7.5%;display:grid;place-items:center;font-size:9px;font-weight:800;color:#fff"><span>phụ đề <span style="color:#b44cff">karaoke</span></span></div>
+        <div style="position:absolute;left:0;right:0;bottom:0;height:14%;background:#241546;border-top:2px solid #b44cff;display:grid;place-items:center;text-align:center;color:#fff;font-size:9px;font-weight:700;line-height:1.3"><span style="font-weight:400;color:#c9b8ff;font-size:9px">Nguồn: VnExpress · 10/10/2026</span></div>
+      </div>
+      <div class="legend">Bố cục khung 1080×1920 (không đúng tỉ lệ từng chữ).</div>
+    </div>
+  </div>
+
+  <div class="builder" id="nvBuilder">
+    <div class="fields">
+      <label class="f" style="grid-column: 1 / -1">Các link bài báo <small>mỗi dòng một link</small><textarea id="nvLinks" rows="3">https://vnexpress.net/...-5130104.html
+https://vnexpress.net/...-5129883.html</textarea></label>
+      <div class="f">Tuổi giọng đọc <small>--audience</small>
+        <div class="seg"><label><input type="radio" name="nvAud" value="" checked>Trẻ, truyền cảm (mặc định)</label><label><input type="radio" name="nvAud" value="trung_niên">Trung niên</label><label><input type="radio" name="nvAud" value="none">Giọng gốc</label></div></div>
+      <div class="f">Giới tính giọng <small>--voice</small>
+        <div class="seg"><label><input type="radio" name="nvVoice" value="female" checked>Nữ</label><label><input type="radio" name="nvVoice" value="male">Nam</label></div></div>
+    </div>
+    <div class="outs">
+      <div class="codebox"><span class="label">Gõ trong Claude Code</span><pre class="code" id="nvCmd"></pre><button class="copy" type="button" data-copy="nvCmd">Chép</button></div>
+      <div class="result"><b>Sẽ tạo</b><ul id="nvOut"></ul></div>
+    </div>
+  </div>
+
+  <h2 style="margin-top:28px">Lệnh script</h2>
+  <div class="codebox"><pre class="code" id="nvScript">python news_video.py fetch "&lt;link1&gt;" "&lt;link2&gt;"
+# Claude đọc work/news/&lt;slug&gt;/article.txt rồi ghi script.json; bạn duyệt
+python news_video.py build --all
+python news_video.py status</pre><button class="copy" type="button" data-copy="nvScript">Chép</button></div>
+
+  <h2 style="margin-top:28px">Prompt mẫu</h2>
+  <div class="sampleList" id="nvSamples"></div>
+
+  <div class="note">Lời đọc là tóm tắt trung lập chỉ bằng thông tin trong bài, số và ngày viết bằng chữ cho giọng đọc dễ đọc. Hình stock chỉ <b>minh họa</b>, không phải ảnh sự kiện. Trang bị chặn hoặc có paywall thì không lấy đủ nội dung. Luôn ghi nguồn; nên xin phép tòa soạn nếu dùng thương mại.</div>
+</section>
+
+<!-- ============ CLIP-VIDEO ============ -->
+<section class="panel" id="p-clip-video" role="tabpanel" aria-labelledby="t-clip-video" hidden>
+  <h2>/clip-video: cắt nhiều short từ một video dài</h2>
+  <p>Đưa vào một video ngang 15–30 phút (file, link YouTube hoặc link Google Drive). Claude đọc bản chép lời để tìm các thông điệp chính, bạn chọn clip nào làm, rồi mỗi clip được dựng thành short dọc 1080×1920 có tiêu đề chữ và phụ đề karaoke tím.</p>
+
+  <div class="flow">
+    <div class="step"><b>1. Chuẩn bị</b><span class="small muted">tải, chép lời</span></div><span class="arrow">→</span>
+    <div class="step"><b>2. Phân tích</b><span class="small muted">Claude tìm thông điệp chính</span></div><span class="arrow">→</span>
+    <div class="step"><b>3. Bạn chọn</b><span class="small muted">làm bao nhiêu clip tùy bạn</span></div><span class="arrow">→</span>
+    <div class="step"><b>4. Dựng</b><span class="small muted">cắt, đổi khung, tiêu đề, phụ đề</span></div>
+  </div>
+
+  <div class="builder" id="cvBuilder">
+    <div class="fields">
+      <label class="f" style="grid-column: 1 / -1">Nguồn video <small>file trên máy, link YouTube hoặc link Google Drive (chia sẻ "Anyone with the link")</small><input type="text" id="cvSrc" value="https://www.youtube.com/watch?v=..."></label>
+      <div class="f">Ngôn ngữ trong video <small>--lang</small>
+        <div class="seg"><label><input type="radio" name="cvLang" value="auto" checked>Tự nhận</label><label><input type="radio" name="cvLang" value="vi">Tiếng Việt</label><label><input type="radio" name="cvLang" value="en">Tiếng Anh</label></div></div>
+      <div class="f">Ngôn ngữ phụ đề và tiêu đề <small>--to</small>
+        <div class="seg"><label><input type="radio" name="cvTo" value="" checked>Giống video</label><label><input type="radio" name="cvTo" value="vi">Tiếng Việt</label><label><input type="radio" name="cvTo" value="en">Tiếng Anh</label></div></div>
+      <div class="f">Khung hình <small>--layout</small>
+        <div class="seg"><label><input type="radio" name="cvLay" value="" checked>Claude chọn</label><label><input type="radio" name="cvLay" value="blur">Nền mờ</label><label><input type="radio" name="cvLay" value="crop">Bám mặt</label></div></div>
+      <label class="f">Độ dài mỗi short <small>--len (giây)</small><input type="text" id="cvLen" value="30-60"></label>
+      <label class="f">Tiêu đề hiện trong <small>--title-seconds (0 = suốt clip)</small><input type="number" id="cvTitle" min="0" max="60" step="1" value="4"></label>
+    </div>
+    <div class="outs">
+      <div class="codebox"><span class="label">Gõ trong Claude Code</span><pre class="code" id="cvCmd"></pre><button class="copy" type="button" data-copy="cvCmd">Chép</button></div>
+      <div class="result"><b>Claude sẽ làm gì</b><ul id="cvSteps"></ul></div>
+    </div>
+  </div>
+
+  <h2 style="margin-top:28px">Hai kiểu khung cho video ngang</h2>
+  <div class="grid cols-2">
+    <div class="card"><h3>Nền mờ (blur)</h3><p class="small">Cả khung ngang nằm giữa, nền là bản mờ của chính video. Tiêu đề ở phía trên, phụ đề ở phía dưới nên không che hình. An toàn cho slide, chia sẻ màn hình, nhiều người trong khung.</p></div>
+    <div class="card"><h3>Bám mặt (crop)</h3><p class="small">Cửa sổ 9:16 đi theo mặt người nói (OpenCV, mặt chính diện), phóng lên 1080×1920. Trông như quay dọc, hợp một người nói trực diện. Video gốc 1080p sẽ hơi mềm; không thấy mặt thì căn giữa.</p></div>
+  </div>
+
+  <h2 style="margin-top:28px">Mỗi short có gì</h2>
+  <ul>
+    <li><b>Tiêu đề chữ</b> trắng trên hộp tím, hiện ở đầu clip (mặc định 4 giây), tối đa hai dòng.</li>
+    <li><b>Phụ đề karaoke tím</b> theo từng từ, đúng ngôn ngữ bạn chọn; nếu khác ngôn ngữ video thì Claude dịch cho các clip được chọn.</li>
+    <li>Cắt tại từ đầu và từ cuối của ý, thêm chút đệm, mờ tiếng đầu cuối, chuẩn hóa âm lượng.</li>
+    <li>Kèm <code>index.md</code>: tiêu đề, thời gian trong video gốc, câu mở đầu, gợi ý chú thích đăng.</li>
+  </ul>
+
+  <h2 style="margin-top:28px">Lệnh script</h2>
+  <div class="codebox"><pre class="code" id="cvScript">python clip_video.py prepare "&lt;nguồn&gt;" --lang vi --name ten-ngan
+# Claude đọc work/clips/ten-ngan/transcript_for_llm.txt và ghi plan.json
+python clip_video.py render ten-ngan --clips 1,3,5 --title-seconds 4</pre><button class="copy" type="button" data-copy="cvScript">Chép</button></div>
+  <p class="small muted" style="margin-top:8px">Thêm <code>--dry-run</code> vào lệnh <code>render</code> để xem giờ cắt mà chưa dựng; <code>--force</code> vào <code>prepare</code> để nhận dạng lại.</p>
+
+  <h2 style="margin-top:28px">Prompt mẫu</h2>
+  <div class="sampleList" id="cvSamples"></div>
+
+  <div class="note">Claude chọn clip dựa vào <b>lời nói</b> (bản chép lời) và vài khung hình mẫu, không xem liên tục cả video, nên đoạn hay nhờ hình ảnh hoặc cử chỉ có thể bị bỏ sót. Nhận dạng 30 phút video mất khoảng 20–45 phút trên CPU. Tải từ YouTube và Drive phụ thuộc vào chia sẻ và chính sách của dịch vụ; nếu lỗi thì tải về rồi đưa đường dẫn file. Chỉ dùng với video của bạn hoặc video bạn có quyền dùng lại.</div>
+</section>
+
+<!-- ============ HỆ THỐNG ============ -->
+<section class="panel" id="p-he-thong" role="tabpanel" aria-labelledby="t-he-thong" hidden>
+  <h2>Thư mục</h2>
+  <div class="tree">ShortVideo/
+├─ .claude/commands/     short-video.md · edit-video.md · auto-subtitle.md
+├─ short_video.py       dựng video từ kịch bản (lệnh /short-video)
+├─ voices.py, voices.json   thư viện giọng đọc (edge-tts và Piper offline)
+├─ profiles.py, profiles.json   thể loại và đối tượng: giọng, nhịp, nhạc
+├─ voice_demo.py        tạo file nghe thử cho từng giọng
+├─ edit_video.py         chỉnh video có sẵn (lệnh /edit-video)
+├─ auto_subtitle.py      phụ đề tự động (lệnh /auto-subtitle)
+├─ clip_video.py         cắt short từ video dài (lệnh /clip-video)
+├─ news_video.py         short từ link bài báo (lệnh /news-video)
+├─ karaoke.py            kiểu phụ đề karaoke tím dùng chung
+├─ docker-compose.yml    server tìm clip stock (cổng 3123)
+├─ posts/                bài đăng fanpage  (&lt;slug&gt;.md)
+├─ specs/                kịch bản          (&lt;slug&gt;.json)
+├─ videos/               thành phẩm        (&lt;slug&gt;/..., clips/ cho các short cắt từ video dài)
+├─ work/                 file trung gian; giữ clip hình gốc raw*.mp4
+├─ assets/music/         nhạc nền
+├─ models/               Whisper medium (1,5 GB) và giọng Piper (models/piper)
+└─ patch/                bản vá ẩn phụ đề của short-video-maker (Docker cần)</div>
+
+  <h2 style="margin-top:28px">Yêu cầu</h2>
+  <div class="tablewrap"><table>
+    <tr><th>Thành phần</th><th>Cần cho</th><th>Ghi chú</th></tr>
+    <tr><td>Docker Desktop đang chạy</td><td>/short-video</td><td>chạy server short-video-maker lấy clip stock</td></tr>
+    <tr><td><code>.env</code> có <code>PEXELS_API_KEY</code></td><td>/short-video</td><td>khóa Pexels miễn phí</td></tr>
+    <tr><td>ffmpeg</td><td>cả năm lệnh</td><td>có <code>libass</code> để vẽ phụ đề</td></tr>
+    <tr><td>Python: <code>edge-tts</code>, <code>faster-whisper</code></td><td>/short-video, /auto-subtitle</td><td>edge-tts cần internet</td></tr>
+    <tr><td>Python: <code>opencv-python</code>, <code>yt-dlp</code>, <code>gdown</code></td><td>/clip-video</td><td>bám mặt, tải từ YouTube, tải từ Google Drive</td></tr>
+    <tr><td>Python: <code>playwright</code>, <code>trafilatura</code>, <code>pillow</code> và Chrome</td><td>/news-video</td><td>chụp ảnh và trích văn bản bài báo (dùng Chrome có sẵn)</td></tr>
+    <tr><td>Model Whisper medium</td><td>/auto-subtitle</td><td>đã tải ở <code>models/faster-whisper-medium</code></td></tr>
+  </table></div>
+
+  <h2 style="margin-top:28px">Hỏi nhanh</h2>
+  <details><summary>Muốn đổi giọng, nhạc hay độ cao phụ đề cho video đã dựng?</summary><div>Dùng <code>--reuse-footage</code>, ví dụ <code>python short_video.py specs/&lt;slug&gt;.json --voice male --reuse-footage</code>. Mất vài phút vì chỉ dựng lại giọng và ghép, không tải lại hình. Độ cao phụ đề đổi ở hằng số <code>SUB_Y</code> trong <code>short_video.py</code> (hiện 1242, tức dòng đầu cách đáy 676 px).</div></details>
+  <details><summary>Hình stock bị lệch ý hoặc có logo thương hiệu?</summary><div>Đổi <code>terms</code> của cảnh đó trong <code>specs/&lt;slug&gt;.json</code> sang từ khóa cụ thể hơn rồi dựng lại. Sau mỗi lần dựng, Claude xem khung hình mỗi cảnh và báo nếu thấy logo hoặc biển hiệu rõ nét, vì những hình đó không nên đăng.</div></details>
+  <details><summary>Video dài hơn 60 giây?</summary><div>Chế độ tranh luận nhắm 30–45 giây (khoảng 110–135 từ), chế độ thông tin 160–180 từ. Đo thực tế khoảng 3,1 từ mỗi giây; 190 từ đã ra 60,8 giây. Rút bớt lời đọc ở cảnh dài nhất rồi dựng lại.</div></details>
+  <details><summary>Gửi video sang điện thoại?</summary><div>Giới hạn gửi là 30 MB. Script tự tạo bản <code>-share.mp4</code> (khoảng 20 MB, bitrate 3 Mbps) khi file lớn hơn 29 MB.</div></details>
+  <details><summary>Docker không chạy thì sao?</summary><div>/short-video báo lỗi vì không lấy được clip. /edit-video và /auto-subtitle không cần Docker. Ghép lại video đã có file trung gian bằng <code>--skip-render</code> cũng không cần.</div></details>
+</section>
+</div>
+
+<script>
+(function () {
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+  var store = {
+    get: function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+    set: function (k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  };
+
+  /* ---------- theme ---------- */
+  var root = document.documentElement;
+  var savedTheme = store.get('sv-theme');
+  if (savedTheme) root.setAttribute('data-theme', savedTheme);
+  $('#themeBtn').addEventListener('click', function () {
+    var dark = root.getAttribute('data-theme') === 'dark' ||
+      (!root.getAttribute('data-theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    var next = dark ? 'light' : 'dark';
+    root.setAttribute('data-theme', next); store.set('sv-theme', next);
+  });
+
+  /* ---------- tabs ---------- */
+  var tabs = $$('nav.tabs [role="tab"]');
+  function showTab(name, focus) {
+    var found = false;
+    tabs.forEach(function (t) {
+      var on = t.dataset.tab === name; if (on) found = true;
+      t.setAttribute('aria-selected', on ? 'true' : 'false');
+      $('#p-' + t.dataset.tab).hidden = !on;
+    });
+    if (!found) return showTab('tong-quan');
+    store.set('sv-tab', name);
+    if (focus) window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  tabs.forEach(function (t) { t.addEventListener('click', function () { showTab(t.dataset.tab, true); }); });
+  $$('[data-go]').forEach(function (b) { b.addEventListener('click', function () { showTab(b.dataset.go, true); }); });
+  showTab(store.get('sv-tab') || 'tong-quan');
+
+  /* ---------- copy buttons ---------- */
+  function copyText(text, btn) {
+    var done = function (ok) { var old = btn.textContent; btn.textContent = ok ? 'Đã chép' : 'Chọn và chép tay'; setTimeout(function () { btn.textContent = old; }, 1400); };
+    var fallback = function () {
+      var ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      var ok = false; try { ok = document.execCommand('copy'); } catch (e) {}
+      document.body.removeChild(ta); done(ok);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(function () { done(true); }, fallback);
+    else fallback();
+  }
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('button.copy'); if (!b) return;
+    copyText($('#' + b.dataset.copy).textContent, b);
+  });
+
+  /* ---------- sample prompt lists ---------- */
+  function samples(id, list) {
+    var box = $(id);
+    list.forEach(function (s) {
+      var row = document.createElement('div'); row.className = 'sample';
+      var code = document.createElement('code'); code.textContent = s;
+      var btn = document.createElement('button'); btn.className = 'btn'; btn.type = 'button'; btn.textContent = 'Chép';
+      btn.addEventListener('click', function () { copyText(s, btn); });
+      row.appendChild(code); row.appendChild(btn); box.appendChild(row);
+    });
+  }
+  samples('#svSamples', [
+    '/short-video tranh luận: chia đôi tiền khi hẹn hò --trẻ',
+    '/short-video info: lợi ích của việc dậy sớm --trung_niên',
+    '/short-video tâm sự: ai sẽ bên bạn khi mệt --trung_niên',
+    '/short-video info: mẹo ngủ ngon --trẻ --voice male --mode both',
+    '/short-video tranh luận: khách hàng là thượng đế hay đúng quy trình --trung_niên --mode music'
+  ]);
+  samples('#evSamples', [
+    '/edit-video videos/a.mp4 cắt từ giây 5 đến 40, chèn logo logo.png góc trái trên, mờ dần ở cuối',
+    '/edit-video a.mp4 b.mp4 ghép hai video, chuyển cảnh mờ 0.6 giây, tăng tốc 1.1',
+    '/edit-video videos/clip.mp4 đổi sang khung dọc 1080x1920, zoom chậm 1.1'
+  ]);
+  samples('#asSamples', [
+    '/auto-subtitle videos/clip.mp4 --lang vi',
+    '/auto-subtitle videos/talk.mp4 --lang en --to vi',
+    '/auto-subtitle videos/clip.mp4 --lang vi --no-review'
+  ]);
+
+  /* ---------- /short-video: stepper ---------- */
+  var steps = [
+    '<h3>Bước 1. Bài viết fanpage</h3><p>Claude viết bài tiếng Việt theo kiểu bạn chọn và lưu ở <code>posts/&lt;slug&gt;.md</code>. Bạn đọc và duyệt.</p><ul><li>Tranh luận: mở bằng câu hỏi hai lựa chọn, kể hai quan điểm dài tương đương, khép nhẹ, kết bằng câu hỏi mời bình luận.</li><li>Cách dẫn quan điểm được đổi liên tục ("Với nhiều người...", "Ở chiều ngược lại, không ít người băn khoăn...") để các bài không giống nhau.</li><li>Không dùng nhãn "Phe A / Phe B" trong bài đăng.</li></ul>',
+    '<h3>Bước 2. Kịch bản video</h3><p>Sau khi bài được duyệt, Claude chia thành 5–6 cảnh và lưu ở <code>specs/&lt;slug&gt;.json</code>, kèm bảng cảnh, lời đọc, từ khóa hình để bạn duyệt.</p><ul><li>Hook đặt hai thế lực đối lập trong một câu, câu cuối luôn là câu hỏi mở.</li><li>Số viết bằng chữ ("bốn mươi"), tránh ký hiệu và emoji vì giọng đọc không đọc được.</li><li>Từ khóa hình là tiếng Anh, cụ thể và tránh nơi có thể lộ thương hiệu (phố, quán).</li></ul>',
+    '<h3>Bước 3. Dựng video</h3><p>Chỉ chạy khi bạn đã đồng ý. Mất khoảng 6–10 phút.</p><ul><li>Giọng đọc edge-tts, đọc từng câu với cao độ và tốc độ theo ý nghĩa.</li><li>Mỗi cảnh một lần tải clip stock từ Pexels qua server Docker, rồi cắt hoặc kéo giãn cho vừa lời đọc.</li><li>Gắn phụ đề karaoke tím, trộn nhạc, xuất 1080×1920.</li><li>Sau khi dựng, Claude xem khung hình từng cảnh, kiểm tra hình lệch ý và logo, báo kết quả, hỏi có gửi sang điện thoại không.</li></ul>'
+  ];
+  var stepBtns = $$('#stepper [data-step]');
+  function showStep(i) {
+    $('#stepBody').innerHTML = steps[i];
+    stepBtns.forEach(function (b) { b.setAttribute('aria-selected', String(+b.dataset.step === i)); });
+  }
+  stepBtns.forEach(function (b) { b.addEventListener('click', function () { showStep(+b.dataset.step); }); });
+  showStep(0);
+
+  /* ---------- /short-video: command builder ---------- */
+  function val(name) { var el = document.querySelector('input[name="' + name + '"]:checked'); return el ? el.value : ''; }
+  var PROFILE = {
+    debate:  { label: 'tranh luận', rate: '+10%', secs: '30–45 giây', words: '110–135 từ', music: { tre: 'Oh Please - Telecasted', trung_nien: 'Hopeful - Nat Keefe' } },
+    info:    { label: 'info',       rate: '+8%',  secs: '52–58 giây', words: '160–180 từ', music: { tre: 'Touch - Anno Domini Beats', trung_nien: 'Crystaline - Quincas Moreira' } },
+    confess: { label: 'tâm sự',     rate: '+3%',  secs: '46–55 giây', words: '130–155 từ', music: { tre: 'Final Soliloquy - Asher Fulero', trung_nien: 'No.2 Remembering Her - Esther Abrami' } }
+  };
+  function svUpdate() {
+    var topic = ($('#svTopic').value || '<chủ đề>').trim();
+    var kind = val('svKind'), aud = val('svAud'), mode = val('svMode'), voice = val('svVoice');
+    var pr = PROFILE[kind], age = aud === 'tre' ? 'young' : 'mature';
+    var flags = ' --' + (aud === 'tre' ? 'trẻ' : 'trung_niên');
+    if (voice !== 'female') flags += ' --voice ' + voice;
+    if (mode !== 'voice') flags += ' --mode ' + mode;
+    $('#svCmd').textContent = '/short-video ' + pr.label + ': ' + topic + flags;
+    var sflags = '';
+    if (voice !== 'female') sflags += ' --voice ' + voice;
+    if (mode !== 'voice') sflags += ' --mode ' + mode;
+    $('#svScript').textContent = 'python short_video.py specs/<slug>.json' + sflags;
+    var key = voice === 'piper-vais' ? 'piper-vais' : voice + '-' + age;
+    var vf = '<slug>-voice-' + key + '.mp4';
+    var files = [];
+    if (mode === 'voice' || mode === 'both') files.push(vf);
+    if (mode === 'music' || mode === 'both') files.push('<slug>-music.mp4');
+    var who = { 'female-young': 'giọng nữ trẻ trung', 'female-mature': 'giọng nữ trung niên', 'male-young': 'giọng nam trẻ trung', 'male-mature': 'giọng nam trung niên', 'piper-vais': 'giọng Piper offline' };
+    var desc = { '<slug>-music.mp4': 'nhạc lớn, không giọng đọc' }; desc[vf] = who[key] + ' + nhạc nhỏ';
+    var ul = $('#svFiles'); ul.innerHTML = '';
+    files.forEach(function (f) { var li = document.createElement('li'); li.innerHTML = '<code></code> ' + '<span class="muted"></span>'; li.firstChild.textContent = f; li.lastChild.textContent = '(' + desc[f] + ')'; ul.appendChild(li); });
+    var li2 = document.createElement('li'); li2.innerHTML = '<b>Tự khớp:</b> giọng <code></code>, tốc độ gốc ' + pr.rate + ', nhạc <span class="mono"></span>';
+    li2.querySelector('code').textContent = key; li2.querySelector('.mono').textContent = pr.music[aud]; ul.appendChild(li2);
+    $('#svNote').textContent = 'Thể loại ' + pr.label + ': kịch bản ' + pr.words + ', khoảng ' + pr.secs + '. Văn phong ' + (aud === 'tre' ? 'trẻ: câu ngắn, nhịp nhanh, hook trực diện, ví dụ đời thường.' : 'trung niên: câu dài hơn, điềm đạm, ví dụ gia đình và sức khỏe.') +
+      ' Thời gian dựng khoảng 6–10 phút' + (mode === 'both' ? ' (hai bản dùng chung hình nên không lâu gấp đôi).' : '.');
+  }
+  $$('#svBuilder input').forEach(function (i) { i.addEventListener('input', svUpdate); i.addEventListener('change', svUpdate); });
+  svUpdate();
+
+  /* ---------- /edit-video: builder + logo preview ---------- */
+  function q(s) { return /[\s*?\[]/.test(s) ? '"' + s + '"' : s; }
+  function evUpdate() {
+    var inputs = ($('#evIn').value || 'in.mp4').trim().split(/\s+/);
+    var out = ($('#evOut').value || 'out.mp4').trim();
+    var a = $('#evTrimA').value.trim(), b = $('#evTrimB').value.trim();
+    var trans = +$('#evTrans').value, speed = +$('#evSpeed').value, fi = +$('#evFi').value, fo = +$('#evFo').value, zoom = +$('#evZoom').value;
+    var logoOn = $('#evLogoOn').checked, pos = $('#evPos').value, size = +$('#evSize').value, op = +$('#evOp').value;
+    $('#evSpeedV').textContent = speed.toFixed(2).replace(/0$/, '') + '×';
+    $('#evZoomV').textContent = zoom > 1 ? zoom.toFixed(2) + '×' : 'tắt';
+    $('#evSizeV').textContent = size + '%'; $('#evOpV').textContent = Math.round(op * 100) + '%';
+    var args = [], words = [];
+    if (a || b) { args.push('--trim ' + (a || '0') + '-' + (b || '')); words.push('cắt ' + (a ? 'từ giây ' + a : 'từ đầu') + (b ? ' đến giây ' + b : ' đến hết')); }
+    if (inputs.length > 1 && trans > 0) { args.push('--transition ' + trans); words.push('chuyển cảnh mờ ' + trans + ' giây'); }
+    if (speed !== 1) { args.push('--speed ' + speed); words.push('tốc độ ' + speed + 'x'); }
+    if (fi > 0) { args.push('--fade-in ' + fi); words.push('mờ dần vào ' + fi + ' giây'); }
+    if (fo > 0) { args.push('--fade-out ' + fo); words.push('mờ dần ra ' + fo + ' giây'); }
+    if (zoom > 1) { args.push('--zoom ' + zoom); words.push('zoom chậm ' + zoom + 'x'); }
+    var posName = { tl: 'góc trái trên', tr: 'góc phải trên', bl: 'góc trái dưới', br: 'góc phải dưới', c: 'giữa khung' }[pos];
+    if (logoOn) {
+      var lg = ($('#evLogo').value || 'logo.png').trim();
+      args.push('--logo ' + q(lg) + (pos !== 'tr' ? ' --logo-pos ' + pos : '') + (size !== 14 ? ' --logo-size ' + size : '') + (op !== 1 ? ' --logo-opacity ' + op : ''));
+      words.push('chèn logo ' + lg + ' ' + posName + (size !== 14 ? ', cỡ ' + size + '%' : ''));
+    }
+    var batch = $('#evBatch').checked;
+    if (batch) args.unshift('--batch');
+    if (batch) args.push('--suffix edit');
+    $('#evCmd').textContent = 'python edit_video.py ' + inputs.map(q).join(' ') + ' -o ' + q(out) + (args.length ? ' ' + args.join(' ') : '');
+    var prompt = '/edit-video ' + inputs.join(' ') + ' ' + (batch ? 'làm hàng loạt cho từng video, mỗi video xử lý riêng' + (words.length ? ', ' : '') : (inputs.length > 1 ? 'ghép các video' + (words.length ? ', ' : '') : '')) + (words.length ? words.join(', ') : (inputs.length > 1 ? '' : 'xuất lại'));
+    $('#evSlash').textContent = prompt.trim();
+    var box = $('#evLogoBox'); box.hidden = !logoOn;
+    if (logoOn) {
+      var m = 40 / 1080 * 100, w = size, h = size * 0.4 * 1080 / 1920;
+      box.style.width = w + '%'; box.style.height = (h) + '%'; box.style.opacity = op;
+      box.style.left = box.style.right = box.style.top = box.style.bottom = 'auto';
+      var my = 40 / 1920 * 100;
+      if (pos === 'tl') { box.style.left = m + '%'; box.style.top = my + '%'; }
+      if (pos === 'tr') { box.style.right = m + '%'; box.style.top = my + '%'; }
+      if (pos === 'bl') { box.style.left = m + '%'; box.style.bottom = my + '%'; }
+      if (pos === 'br') { box.style.right = m + '%'; box.style.bottom = my + '%'; }
+      if (pos === 'c') { box.style.left = (50 - w / 2) + '%'; box.style.top = (50 - h / 2) + '%'; }
+    }
+  }
+  $$('#evBuilder input, #evBuilder select').forEach(function (i) { i.addEventListener('input', evUpdate); i.addEventListener('change', evUpdate); });
+  evUpdate();
+
+  /* ---------- /auto-subtitle: builder ---------- */
+  function asUpdate() {
+    var v = ($('#asVideo').value || 'video.mp4').trim();
+    var lang = val('asLang'), to = val('asTo'), rev = val('asRev') === 'yes';
+    var flags = '';
+    if (lang !== 'auto') flags += ' --lang ' + lang;
+    if (to) flags += ' --to ' + to;
+    if (!rev) flags += ' --no-review';
+    $('#asSlash').textContent = '/auto-subtitle ' + q(v) + flags;
+    var translate = to && lang !== 'auto' ? to !== lang : !!to;
+    var st = ['Chép lời bằng Whisper medium (lưu transcript.json có mốc từng từ).'];
+    if (rev) st.push('Sửa chỗ nghe sai, đánh dấu chỗ còn nghi ngờ rồi chờ bạn duyệt.');
+    if (translate) st.push('Dịch sang ' + (to === 'vi' ? 'tiếng Việt' : 'tiếng Anh') + ' (mốc từng từ chỉ là ước lượng đều trong mỗi câu).');
+    st.push('Gắn phụ đề karaoke tím vào video và lưu ở videos/auto-sub/.');
+    st.push('Xem vài khung hình để kiểm tra dấu, độ tràn khung và chữ chồng, rồi báo kết quả.');
+    var ul = $('#asSteps'); ul.innerHTML = ''; st.forEach(function (s) { var li = document.createElement('li'); li.textContent = s; ul.appendChild(li); });
+    var name = v.split(/[\\/]/).pop().replace(/\.[^.]+$/, '');
+    var tr = translate ? 'transcript_' + to + '.json' : (rev ? 'transcript_fixed.json' : '');
+    var cmd = 'python auto_subtitle.py ' + q(v) + (lang !== 'auto' ? ' --lang ' + lang : '') + ((rev || translate) ? ' --transcribe-only' : '');
+    if (rev || translate) cmd += '\n# sửa hoặc dịch work/auto-sub/' + name + '/' + tr + '\npython auto_subtitle.py ' + q(v) + ' --transcript work/auto-sub/' + name + '/' + tr;
+    $('#asCmd').textContent = cmd;
+  }
+  $$('#asBuilder input').forEach(function (i) { i.addEventListener('input', asUpdate); i.addEventListener('change', asUpdate); });
+  asUpdate();
+
+
+  samples('#cvSamples', [
+    '/clip-video "https://www.youtube.com/watch?v=..." --lang en --to vi',
+    '/clip-video videos/bai-giang.mp4 --lang vi --len 40-60',
+    '/clip-video "https://drive.google.com/file/d/.../view" --lang vi --layout crop',
+    '/clip-video videos/webinar.mp4 --lang en --layout blur --title-seconds 0'
+  ]);
+  function cvUpdate() {
+    var src = ($('#cvSrc').value || 'video.mp4').trim();
+    var lang = val('cvLang'), to = val('cvTo'), lay = val('cvLay');
+    var len = ($('#cvLen').value || '30-60').trim(), ts = +$('#cvTitle').value;
+    var flags = '';
+    if (lang !== 'auto') flags += ' --lang ' + lang;
+    if (to) flags += ' --to ' + to;
+    if (len !== '30-60') flags += ' --len ' + len;
+    if (lay) flags += ' --layout ' + lay;
+    if (ts !== 4) flags += ' --title-seconds ' + ts;
+    $('#cvCmd').textContent = '/clip-video ' + (/\s/.test(src) || /^https?:/.test(src) ? '"' + src + '"' : src) + flags;
+    var translate = to && lang !== 'auto' ? to !== lang : !!to;
+    var st = [];
+    st.push(/^https?:/.test(src) ? 'Tải video về máy, chép lời bằng Whisper medium (lâu: khoảng 0,65–1,4 lần thời lượng).' : 'Chép lời video bằng Whisper medium (lâu: khoảng 0,65–1,4 lần thời lượng).');
+    st.push('Đọc bản chép lời và vài khung hình, đề xuất các thông điệp chính dài ' + len + ' giây, kèm tiêu đề, câu mở đầu, lý do, điểm, và ' + (lay ? 'khung ' + (lay === 'blur' ? 'nền mờ' : 'bám mặt') + ' cho mọi clip.' : 'khung phù hợp từng clip.'));
+    st.push('Dừng lại chờ bạn chọn clip nào làm.');
+    st.push('Sửa lỗi nhận dạng' + (translate ? ' và dịch sang ' + (to === 'vi' ? 'tiếng Việt' : 'tiếng Anh') : '') + ' cho các clip được chọn.');
+    st.push('Dựng từng short 1080×1920 có tiêu đề ' + (ts > 0 ? 'hiện ' + ts + ' giây đầu' : 'hiện suốt clip') + ' và phụ đề karaoke tím, rồi kiểm tra khung hình và báo kết quả.');
+    var ul = $('#cvSteps'); ul.innerHTML = ''; st.forEach(function (x) { var li = document.createElement('li'); li.textContent = x; ul.appendChild(li); });
+  }
+  $$('#cvBuilder input').forEach(function (i) { i.addEventListener('input', cvUpdate); i.addEventListener('change', cvUpdate); });
+  cvUpdate();
+
+
+  samples('#nvSamples', [
+    '/news-video https://vnexpress.net/ten-bai-viet-5130104.html',
+    '/news-video https://vnexpress.net/bai-1.html https://tuoitre.vn/bai-2.htm --audience trẻ',
+    '/news-video https://dantri.com.vn/bai-3.htm --voice male --audience trung_niên'
+  ]);
+  function nvUpdate() {
+    var links = ($('#nvLinks').value || '').split(/\s+/).filter(function (x) { return x; });
+    var aud = val('nvAud'), voice = val('nvVoice');
+    var flags = '';
+    if (aud) flags += ' --audience ' + aud;
+    if (voice !== 'female') flags += ' --voice ' + voice;
+    $('#nvCmd').textContent = '/news-video ' + (links.length ? links.join(' ') : '<link>') + flags;
+    var ul = $('#nvOut'); ul.innerHTML = '';
+    function add(t) { var li = document.createElement('li'); li.textContent = t; ul.appendChild(li); }
+    add(links.length + (links.length > 1 ? ' video (làm hàng loạt), mỗi link một video' : ' video') + ' trong videos/news/<slug>/');
+    add('Giọng ' + (voice === 'male' ? 'nam' : 'nữ') + (aud === 'trung_niên' ? ' trung niên' : aud === 'none' ? ' gốc' : ' trẻ trung, truyền cảm') + ', khoảng 38–55 giây mỗi video.');
+    add('Tiêu đề bài báo ở đầu khung, chân trang ghi "Nguồn: tên báo · ngày".');
+  }
+  $$('#nvBuilder input, #nvBuilder textarea').forEach(function (i) { i.addEventListener('input', nvUpdate); i.addEventListener('change', nvUpdate); });
+  nvUpdate();
+
+  /* ---------- karaoke demo ---------- */
+  var capEl = $('#kCap'), two = true, words = [], idx = 0, playing = true, timer = null;
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var textTwo = ['Có lẽ không ai sai hoàn toàn,', 'chỉ là mỗi người hiểu khác'];
+  var textOne = ['Còn bạn nghiêng về cách nào?'];
+  function build() {
+    var lines = two ? textTwo : textOne; capEl.innerHTML = ''; words = [];
+    lines.forEach(function (ln, i) {
+      if (i) capEl.appendChild(document.createElement('br'));
+      ln.split(' ').forEach(function (w) {
+        var s = document.createElement('span'); s.className = 'w'; s.textContent = w + ' '; capEl.appendChild(s); words.push(s);
+      });
+    });
+    idx = 0;
+  }
+  function tick() {
+    if (!playing) return;
+    if (idx < words.length) words[idx++].classList.add('sung');
+    else { idx = 0; words.forEach(function (w) { w.classList.remove('sung'); }); }
+  }
+  function start() { clearInterval(timer); timer = setInterval(tick, 380); }
+  build();
+  if (reduce) { playing = false; words.slice(0, 3).forEach(function (w) { w.classList.add('sung'); }); $('#kPlay').textContent = 'Chạy'; }
+  else start();
+  $('#kPlay').addEventListener('click', function () { playing = !playing; this.textContent = playing ? 'Tạm dừng' : 'Chạy'; });
+  $('#kLines').addEventListener('click', function () { two = !two; build(); });
+})();
+</script>
+
+</body>
+</html>

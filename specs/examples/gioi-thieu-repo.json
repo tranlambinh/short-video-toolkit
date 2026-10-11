@@ -1,0 +1,32 @@
+{
+  "slug": "gioi-thieu-repo",
+  "voice": "vi-VN-HoaiMyNeural",
+  "rate": "+10%",
+  "music": "Hopeful - Nat Keefe.mp3",
+  "scenes": [
+    {
+      "vi": "Bạn muốn làm short video nhưng ngại viết kịch bản, tìm hình, thu giọng, làm phụ đề? Có một bộ công cụ làm hết giúp bạn, ngay trong Claude Code.",
+      "terms": ["woman filming video phone", "content creator desk laptop", "person thinking laptop"]
+    },
+    {
+      "vi": "Gõ lệnh short video kèm một chủ đề. Claude viết bài fanpage, soạn kịch bản, rồi chờ bạn duyệt. Bạn đồng ý, video mới được dựng.",
+      "terms": ["typing laptop keyboard", "woman writing notebook desk", "person using laptop cafe"]
+    },
+    {
+      "vi": "Video dọc chín trên mười sáu, có giọng đọc tiếng Việt, hình tự tìm theo kịch bản, nhạc nền, và phụ đề karaoke đổi màu tím theo từng từ.",
+      "terms": ["smartphone vertical video", "woman recording video phone", "hands holding smartphone video"]
+    },
+    {
+      "vi": "Đã có video sẵn? Lệnh edit video giúp cắt, ghép, chuyển cảnh, mờ dần, zoom, và chèn logo của bạn, mà không đụng đến file gốc.",
+      "terms": ["hands editing video laptop", "woman editing video desk", "filmmaker editing computer"]
+    },
+    {
+      "vi": "Còn lệnh auto subtitle tự nghe video, chép lời tiếng Việt hoặc tiếng Anh, soát lỗi, dịch, rồi gắn phụ đề karaoke.",
+      "terms": ["woman listening headphones laptop", "person typing transcript", "headphones laptop desk"]
+    },
+    {
+      "vi": "Ba lệnh, một bộ công cụ, chạy ngay trên máy của bạn. Bạn muốn thử làm video về chủ đề nào đầu tiên? Hãy bình luận bên dưới nhé!",
+      "terms": ["woman smiling laptop", "creator celebrating phone", "friends watching phone video"]
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+# secrets
+.env
+
+# generated or downloaded (large)
+.venv/
+__pycache__/
+*.pyc
+work/
+videos/
+models/
+assets/music/*
+!assets/music/README.md
+
+# personal content (keep only examples)
+posts/*
+!posts/.gitkeep
+specs/*
+!specs/examples/
+
+.DS_Store
+Thumbs.db
