@@ -87,7 +87,7 @@ Vài ví dụ khác:
 - **Giọng đọc:** `voices.json` (đổi giọng, cao độ, tốc độ). Xem thử mọi giọng: `python voice_demo.py`.
 - **Thể loại, đối tượng, nhạc, độ dài:** `profiles.json`.
 - **Nhạc từng thể loại:** đổi tên file trong mục `music` của `profiles.json` thành file của bạn.
-- **Giọng offline (không cần mạng):** `--voice piper-vais` (cần `python setup_models.py --piper`, script cài đã tải sẵn).
+- **Giọng offline (không cần mạng):** `--voice vieneu-maianh` (VieNeu-TTS, nghe tự nhiên nhất, 7 giọng có sẵn và nhân bản giọng của bạn) hoặc `--voice piper-vais` (nhẹ, nhanh). Script cài đã tải sẵn; cài tay: `pip install vieneu` rồi `python setup_models.py --skip-whisper --piper --vieneu`.
 
 ## Xử lý lỗi thường gặp
 | Hiện tượng | Cách xử lý |

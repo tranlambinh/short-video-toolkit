@@ -22,8 +22,8 @@ say "2/6 Python environment (.venv)"
 say "3/6 Browser for /news-video (used when Chrome is not installed)"
 .venv/bin/python -m playwright install chromium
 
-say "4/6 Speech models (Whisper medium, about 1.5 GB)"
-.venv/bin/python setup_models.py --piper
+say "4/6 Speech models (Whisper medium 1.5 GB, offline voices about 0.9 GB)"
+.venv/bin/python setup_models.py --piper --vieneu
 
 say "5/6 Settings"
 if [ ! -f .env ]; then cp .env.example .env; echo "Created .env. Open it and paste your free Pexels key (pexels.com/api)."; fi

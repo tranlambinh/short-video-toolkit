@@ -3,6 +3,7 @@
 
   python setup_models.py              # Whisper medium (about 1.5 GB) - needed by /auto-subtitle and /clip-video
   python setup_models.py --piper      # also the 3 offline Vietnamese Piper voices (about 90 MB, optional)
+  python setup_models.py --vieneu     # also VieNeu-TTS v3 Turbo offline voices + Whisper base for karaoke timing (about 750 MB, optional)
   python setup_models.py --skip-whisper --piper
 """
 import argparse
@@ -46,9 +47,27 @@ def piper():
     print("Piper voices ready:", dest)
 
 
+def vieneu():
+    try:
+        import vieneu  # noqa: F401
+    except ImportError:
+        sys.exit("VieNeu-TTS is not installed. Install it first: pip install vieneu")
+    import voices
+    print("Downloading VieNeu-TTS v3 Turbo (first time takes a few minutes) ...")
+    tts = voices._vieneu_model()
+    print(f"VieNeu ready: {len(tts.list_preset_voices())} preset voices (python voices.py --vieneu-list)")
+    dest = ROOT / "models" / "faster-whisper-base"
+    if not (dest / "model.bin").exists():
+        from huggingface_hub import snapshot_download
+        print("Downloading Whisper base (about 150 MB) for VieNeu karaoke timing ...")
+        snapshot_download("Systran/faster-whisper-base", local_dir=str(dest))
+    print("Whisper base ready:", dest)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--piper", action="store_true", help="also download the offline Piper voices")
+    ap.add_argument("--vieneu", action="store_true", help="also download the offline VieNeu-TTS voices")
     ap.add_argument("--skip-whisper", action="store_true")
     a = ap.parse_args()
     try:
@@ -56,6 +75,8 @@ def main():
             whisper()
         if a.piper:
             piper()
+        if a.vieneu:
+            vieneu()
     except Exception as e:
         sys.exit(f"download failed: {type(e).__name__}: {e}\nCheck the internet connection and run again (finished files are kept).")
 

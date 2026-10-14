@@ -1,5 +1,5 @@
 {
-  "_help": "Mỗi giọng là một khóa dùng với --voice. engine: edge (cần internet) hoặc piper (chạy offline). rate (%), pitch (Hz), volume (%) là độ lệch cộng thêm vào cách đọc từng câu. f0 là cao độ trung bình của giọng piper, dùng để đổi Hz thành tỉ lệ dịch cao độ.",
+  "_help": "Mỗi giọng là một khóa dùng với --voice. engine: edge (cần internet), piper hoặc vieneu (chạy offline). rate (%), pitch (Hz), volume (%) là độ lệch cộng thêm vào cách đọc từng câu. f0 là cao độ trung bình của giọng piper/vieneu, dùng để đổi Hz thành tỉ lệ dịch cao độ. vieneu: voice là tên giọng có sẵn (xem python voices.py --vieneu-list), hoặc ref_audio là file ghi âm 3-8 giây để nhân bản giọng; mốc thời gian từng chữ cho karaoke lấy bằng Whisper (align: false để tắt). Gõ thẳng --voice \"vieneu:Tên giọng\" để dùng giọng không có khóa riêng.",
   "voices": {
     "female": {
       "engine": "edge",
@@ -62,6 +62,54 @@
       "speaker": 2,
       "f0": 143,
       "label": "Piper offline: VIVOS giọng nam (thử nghiệm, nghe kém nhất)"
+    },
+    "vieneu-maianh": {
+      "engine": "vieneu",
+      "voice": "Mai Anh",
+      "f0": 204,
+      "label": "VieNeu offline: Mai Anh (nữ, Bắc, phong cách tin tức)"
+    },
+    "vieneu-ngochuyen": {
+      "engine": "vieneu",
+      "voice": "Ngọc Huyền",
+      "f0": 219,
+      "label": "VieNeu offline: Ngọc Huyền (nữ, Bắc, tự nhiên)"
+    },
+    "vieneu-trucly": {
+      "engine": "vieneu",
+      "voice": "Trúc Ly",
+      "f0": 241,
+      "label": "VieNeu offline: Trúc Ly (nữ, Bắc, tự nhiên, trẻ)"
+    },
+    "vieneu-thuydung": {
+      "engine": "vieneu",
+      "voice": "Thùy Dung",
+      "f0": 221,
+      "label": "VieNeu offline: Thùy Dung (nữ, Nam, phong cách tin tức)"
+    },
+    "vieneu-haidang": {
+      "engine": "vieneu",
+      "voice": "Hải Đăng",
+      "f0": 142,
+      "label": "VieNeu offline: Hải Đăng (nam, Bắc, tự nhiên)"
+    },
+    "vieneu-thienminh": {
+      "engine": "vieneu",
+      "voice": "Thiện Minh",
+      "f0": 111,
+      "label": "VieNeu offline: Thiện Minh (nam, Bắc, kể chuyện, trầm)"
+    },
+    "vieneu-minhtriet": {
+      "engine": "vieneu",
+      "voice": "Minh Triết",
+      "f0": 147,
+      "label": "VieNeu offline: Minh Triết (nam, Nam, phong cách tin tức)"
+    },
+    "vieneu-clone": {
+      "engine": "vieneu",
+      "ref_audio": "assets/voices/clone.wav",
+      "f0": 180,
+      "label": "VieNeu nhân bản giọng: đặt file ghi âm 3-8 giây vào assets/voices/clone.wav (đo lại f0 nếu chỉnh cao độ)"
     },
     "en-male-mature": {
       "engine": "edge",

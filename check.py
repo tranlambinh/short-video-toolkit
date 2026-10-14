@@ -43,6 +43,11 @@ def main():
             row(True, f"package {pkg}")
         except Exception:
             row(False, f"package {pkg}", "missing", "Activate the virtual environment, then: pip install -r requirements.txt")
+    try:
+        importlib.import_module("vieneu")
+        row(True, "package vieneu", "offline VieNeu-TTS voices", required=False)
+    except Exception:
+        row(False, "package vieneu", "missing (optional)", "pip install vieneu, then python setup_models.py --skip-whisper --vieneu", required=False)
 
     ff = shutil.which("ffmpeg")
     row(bool(ff), "ffmpeg", ff or "not found", "Windows: winget install Gyan.FFmpeg   |   macOS: brew install ffmpeg")
@@ -50,7 +55,7 @@ def main():
         filters = run(["ffmpeg", "-hide_banner", "-filters"])
         text = (filters.stdout if filters else "") or ""
         row(" ass " in text, "ffmpeg subtitles filter (libass)", "", "Install a full ffmpeg build (Gyan.FFmpeg or brew ffmpeg).")
-        row("rubberband" in text, "ffmpeg rubberband filter", "only for the offline Piper voices", "Optional; the full ffmpeg builds include it.", required=False)
+        row("rubberband" in text, "ffmpeg rubberband filter", "only for the offline Piper / VieNeu voices", "Optional; the full ffmpeg builds include it.", required=False)
 
     d = shutil.which("docker")
     row(bool(d), "Docker", d or "not found", "Install Docker Desktop (docker.com) and start it.")
@@ -87,6 +92,8 @@ def main():
     row((ROOT / "models" / "faster-whisper-medium" / "model.bin").exists(), "Whisper medium model",
         "", "python setup_models.py", required=False)
     row((ROOT / "models" / "piper").exists(), "Piper offline voices", "optional", "python setup_models.py --piper", required=False)
+    row((ROOT / "models" / "faster-whisper-base" / "model.bin").exists(), "Whisper base (karaoke timing for VieNeu voices)",
+        "optional", "python setup_models.py --skip-whisper --vieneu", required=False)
 
     music = [p for p in (ROOT / "assets" / "music").glob("*") if p.suffix.lower() in (".mp3", ".m4a", ".wav", ".ogg", ".flac")]
     row(bool(music), "background music in assets/music", f"{len(music)} file(s)",
@@ -99,7 +106,7 @@ def main():
         net = True
     except Exception:
         net = False
-    row(net, "internet access to edge-tts voices", "", "edge-tts needs internet. Use the offline Piper voices (--voice piper-vais) without it.", required=False)
+    row(net, "internet access to edge-tts voices", "", "edge-tts needs internet. Use the offline voices (--voice vieneu-maianh or piper-vais) without it.", required=False)
 
     fails = [p for p in problems if p[0]]
     print()

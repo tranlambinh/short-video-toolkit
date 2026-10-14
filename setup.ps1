@@ -20,8 +20,8 @@ if (-not (Test-Path .venv)) { python -m venv .venv }
 Write-Host "3/6 Browser for /news-video (skipped if Chrome is installed)" -ForegroundColor Cyan
 & .\.venv\Scripts\python.exe -m playwright install chromium
 
-Write-Host "4/6 Speech models (Whisper medium, about 1.5 GB)" -ForegroundColor Cyan
-& .\.venv\Scripts\python.exe setup_models.py --piper
+Write-Host "4/6 Speech models (Whisper medium 1.5 GB, offline voices about 0.9 GB)" -ForegroundColor Cyan
+& .\.venv\Scripts\python.exe setup_models.py --piper --vieneu
 
 Write-Host "5/6 Settings" -ForegroundColor Cyan
 if (-not (Test-Path .env)) { Copy-Item .env.example .env; Write-Host "Created .env. Open it and paste your free Pexels key (pexels.com/api)." -ForegroundColor Yellow }

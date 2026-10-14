@@ -2,6 +2,7 @@
 edge-tts>=7.2.0            # Vietnamese / English neural voices (needs internet)
 faster-whisper>=1.2.0      # speech recognition for /auto-subtitle and /clip-video
 piper-tts>=1.8.0           # offline voices (optional)
+vieneu>=3.8                # offline VieNeu-TTS voices + voice cloning (optional, CPU via ONNX)
 playwright>=1.50           # article screenshots for /news-video
 trafilatura>=2.0.0         # article text extraction
 opencv-python-headless>=4.9  # face tracking for /clip-video

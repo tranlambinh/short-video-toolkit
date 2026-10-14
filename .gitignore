@@ -10,6 +10,8 @@ videos/
 models/
 assets/music/*
 !assets/music/README.md
+assets/voices/*
+!assets/voices/README.md
 
 # personal content (keep only examples)
 posts/*

@@ -47,7 +47,7 @@ def f0_median(path):
 async def make(key, base_rate):
     cfg = voices.resolve(key)
     OUT.mkdir(parents=True, exist_ok=True)
-    tmp = OUT / f"_{key}"
+    tmp = OUT / f"_{cfg['key']}"
     tmp.mkdir(exist_ok=True)
     parts, stats = [], []
     for j, text in enumerate(SENTENCES):
@@ -76,7 +76,7 @@ async def make(key, base_rate):
             parts.append(gap)
     lst = tmp / "list.txt"
     lst.write_text("".join(f"file '{p.name}'\n" for p in parts), encoding="utf-8")
-    sample = OUT / f"{key}.mp3"
+    sample = OUT / f"{cfg['key']}.mp3"
     subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "concat", "-safe", "0", "-i", str(lst), "-c:a", "libmp3lame",
                     "-q:a", "2", str(sample)], check=True)
     for f in tmp.iterdir():
