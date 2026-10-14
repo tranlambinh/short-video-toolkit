@@ -7,7 +7,7 @@ Năm kỹ năng chạy trong Claude Code, gọi bằng lệnh `/...`. Tất cả
 | `/short-video` | Chủ đề → bài fanpage → kịch bản → video hoàn chỉnh | Có (lấy clip stock) |
 | `/edit-video` | Cắt, ghép, chuyển cảnh, tốc độ, mờ dần, zoom, logo cho video có sẵn | Không |
 | `/auto-subtitle` | Nhận dạng giọng nói, soát lỗi, dịch, gắn phụ đề karaoke (Việt/Anh) | Không |
-| `/news-video` | Làm short từ một hoặc nhiều link bài báo: ảnh chụp bài báo, hình minh họa, giọng đọc tóm tắt, phụ đề, chân trang tiêu đề và nguồn | Có (clip stock) |
+| `/news-video` | Làm short từ một hoặc nhiều link bài báo: ảnh chụp bài báo, biểu đồ lấy từ bài, hình minh họa, giọng đọc tóm tắt, phụ đề, chân trang tiêu đề và nguồn | Có (clip stock) |
 | `/dub-video` | Lồng tiếng Anh sang Việt hoặc Việt sang Anh | Không |
 | `/clip-video` | Cắt nhiều short dọc từ một video ngang dài 15-30 phút theo các thông điệp chính (Claude chọn, bạn duyệt), có tiêu đề chữ và phụ đề karaoke | Không |
 
@@ -57,6 +57,8 @@ Giọng trẻ nhanh và cao hơn, giọng trung niên chậm và trầm hơn. **
 | `--mode` | `voice` / `music` / `both` | `voice` | có giọng đọc / nhạc lớn không giọng / cả hai |
 | `--trẻ` / `--trung_niên` | đối tượng | trẻ | tuổi giọng, văn phong, nhạc |
 | `--voice` | `female` / `male` hoặc khóa trong `voices.json` | `female` | giới tính giọng (ghép với đối tượng thành `female-young`, `male-mature`...); khóa khác như `piper-vais` dùng đúng giọng đó |
+| `--theme` (hoặc `"theme"` trong file kịch bản) | `purple` (mặc định) / `green` | `purple` | màu phụ đề chạy chữ và nền: `green` = phụ đề xanh bạc hà, phủ sắc xanh lá lên hình, dải xanh đậm mờ sau phụ đề |
+| `"credit"` trong file kịch bản | một dòng chữ | không có | dòng nguồn nhỏ dưới khối phụ đề, hiện suốt video, ví dụ `"Nguồn: Odette F Joy / https://www.facebook.com/odette.f.joy"` |
 
 **Thư viện giọng** (`voices.json`; xem bằng `python short_video.py --list-voices`; nghe thử bằng `python voice_demo.py --check`, file mẫu ở `videos/voice-samples/`):
 
@@ -65,12 +67,18 @@ Giọng trẻ nhanh và cao hơn, giọng trung niên chậm và trầm hơn. **
 | `female`, `male` | edge-tts (cần internet) | giọng gốc HoaiMy (nữ), NamMinh (nam) |
 | `female-young`, `male-young` | edge-tts | trẻ trung: cao hơn, nhanh hơn, tươi sáng |
 | `female-mature`, `male-mature` | edge-tts | trung niên: trầm hơn, chậm rãi, điềm đạm |
+| `vieneu-maianh`, `vieneu-ngochuyen`, `vieneu-trucly` | VieNeu-TTS (offline) | giọng nữ miền Bắc, tự nhiên nhất trong các giọng offline (Whisper nhận lại 97-100%); Mai Anh kiểu đọc tin tức, Trúc Ly trẻ |
+| `vieneu-thuydung` | VieNeu-TTS (offline) | giọng nữ miền Nam, kiểu đọc tin tức (100%) |
+| `vieneu-haidang`, `vieneu-thienminh` | VieNeu-TTS (offline) | giọng nam miền Bắc; Thiện Minh trầm, kể chuyện (97-100%) |
+| `vieneu-minhtriet` | VieNeu-TTS (offline) | giọng nam miền Nam, kiểu đọc tin tức (95%) |
+| `vieneu-clone` | VieNeu-TTS (offline) | nhân bản giọng từ file ghi âm 3-8 giây `assets/voices/clone.wav` (chỉ dùng giọng có sự đồng ý của chủ giọng) |
+| `"vieneu:Tên giọng"` | VieNeu-TTS (offline) | một trong 25 giọng có sẵn theo tên, ví dụ `"vieneu:Ngọc Linh"`; xem danh sách: `python voices.py --vieneu-list` |
 | `piper-vais` | Piper (offline) | giọng nữ, tốt nhất trong ba giọng Piper (Whisper nhận lại 97% câu mẫu) |
 | `piper-25h` | Piper (offline) | chất lượng thấp hơn (85%) |
 | `piper-vivos-male` | Piper (offline) | giọng nam, thử nghiệm, nghe kém nhất (85%) |
 | tên giọng edge-tts bất kỳ | edge-tts | ví dụ `en-US-AvaNeural` cho tiếng Anh |
 
-Mọi giọng đều được chỉnh cao độ, tốc độ, âm lượng **theo từng câu** (câu hỏi lên giọng và chậm, câu cảm thán sáng và to, câu cuối chậm và trầm). Giọng edge-tts dùng tham số gốc; Piper dùng `length_scale` (tốc độ), `rubberband` (cao độ) và gain (âm lượng). Muốn thêm giọng hoặc chỉnh độ lệch, sửa `voices.json`. Piper cần `pip install piper-tts` và các file giọng ở `models/piper/` (tải bằng `python -m piper.download_voices vi_VN-vais1000-medium --download-dir models/piper`). Giấy phép từng bộ dữ liệu giọng có thể khác nhau, nên kiểm tra thẻ mô hình trên Hugging Face trước khi dùng thương mại.
+Mọi giọng đều được chỉnh cao độ, tốc độ, âm lượng **theo từng câu** (câu hỏi lên giọng và chậm, câu cảm thán sáng và to, câu cuối chậm và trầm). Giọng edge-tts dùng tham số gốc; Piper dùng `length_scale` (tốc độ), `rubberband` (cao độ) và gain (âm lượng). Muốn thêm giọng hoặc chỉnh độ lệch, sửa `voices.json`. VieNeu chạy offline trên CPU (cần `pip install vieneu` và `python setup_models.py --skip-whisper --vieneu`, script cài đã làm sẵn); nó dùng `atempo` (tốc độ), `rubberband` (cao độ), gain (âm lượng). VieNeu không trả mốc thời gian từng chữ như edge-tts, nên Whisper base nghe lại từng câu để karaoke khớp chữ. Mỗi giây giọng đọc tốn khoảng 1,5-2 giây (lần đầu thêm khoảng 20 giây nạp model), nên video 60 giây cần khoảng 2 phút cho giọng đọc. Muốn nhân bản giọng khác: thêm một khóa mới với `"engine": "vieneu", "ref_audio": "assets/voices/<file>.wav"`, rồi đo `f0` bằng `python voice_demo.py --check <khóa>`. Piper cần `pip install piper-tts` và các file giọng ở `models/piper/` (tải bằng `python -m piper.download_voices vi_VN-vais1000-medium --download-dir models/piper`). Giấy phép từng bộ dữ liệu giọng có thể khác nhau, nên kiểm tra thẻ mô hình trên Hugging Face trước khi dùng thương mại.
 
 **File xuất ra** (`videos/<slug>/`): `<slug>-voice-<giọng>.mp4` (giọng đọc + nhạc nhỏ, ví dụ `<slug>-voice-female-young.mp4`), `<slug>-music.mp4` (nhạc lớn). File trên 29 MB có thêm `-share.mp4` (nén để gửi điện thoại, giới hạn 30 MB).
 
@@ -173,8 +181,8 @@ Khung 1080×1920:
 - **Chân trang** (cao 270 px): "Nguồn: <tên báo> · <ngày>".
 
 Quy trình (Claude dừng chờ bạn duyệt cả lô trước khi dựng):
-1. `python news_video.py fetch "<link1>" "<link2>"`: mở từng bài trong Chrome ẩn (khung điện thoại), tắt popup cookie, chụp ảnh trang, trích văn bản. Lưu ở `work/news/<slug>/`.
-2. Claude đọc từng bài và viết `script.json`: tóm tắt trung lập chỉ bằng thông tin trong bài (không giới hạn thời lượng, đủ ý của bài, thường 6-12 cảnh, số viết bằng chữ), cảnh đầu và cuối là ảnh chụp, các cảnh giữa là clip minh họa.
+1. `python news_video.py fetch "<link1>" "<link2>"`: mở từng bài trong Chrome ẩn (khung điện thoại), tắt popup cookie, chụp ảnh trang, trích văn bản, và **tải mọi biểu đồ/ảnh nằm trong thân bài** về `work/news/<slug>/charts/chartN.png` (kèm `charts.json`).
+2. Claude đọc từng bài và viết `script.json`: tóm tắt trung lập chỉ bằng thông tin trong bài (không giới hạn thời lượng, đủ ý của bài, thường 6-12 cảnh, số viết bằng chữ), cảnh đầu và cuối là ảnh chụp, **bài có biểu đồ thì mỗi biểu đồ thật là một cảnh riêng** (cảnh `chart`, nhãn "Biểu đồ", ảnh vừa khung phóng nhẹ dần), các cảnh còn lại là clip minh họa.
 3. Bạn duyệt bảng các bài (tiêu đề, nguồn, độ dài, ghi chú).
 4. `python news_video.py build --all` dựng các bài đã có kịch bản và chưa có video; ra `videos/news/<slug>/<slug>.mp4` và ảnh ghép kiểm tra `work/news/<slug>/montage.png`. `python news_video.py status` cho biết bài nào đã lấy, đã có kịch bản, đã dựng.
 

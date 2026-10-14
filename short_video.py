@@ -10,6 +10,7 @@ Spec JSON:
   "slug": "tuoi-40",                                  (optional, default: file name)
   "voice": "vi-VN-HoaiMyNeural", "rate": "+10%",      (optional)
   "music": "No.2 Remembering Her - Esther Abrami.mp3",(optional, from short-video-maker library)
+  "theme": "green", "credit": "Nguồn: tên / link",     (optional: subtitle colour theme; a source line under the subtitles)
   "scenes": [ {"vi": "Vietnamese narration/subtitle text", "terms": ["english pexels", "search terms"]} ]
 }
 
@@ -19,7 +20,7 @@ Outputs (videos/<slug>/):
   <slug>-music.mp4        loud music + purple karaoke subtitles, no voice-over (--mode music or both)
 Both are 1080x1920 H.264/AAC, fine for TikTok, YouTube Shorts and Reels.
 """
-import argparse, asyncio, json, math, os, re, subprocess, sys, textwrap, time, urllib.request
+import argparse, asyncio, json, math, os, re, subprocess, sys, textwrap, time, urllib.error, urllib.request
 import compat
 from pathlib import Path
 
@@ -32,6 +33,18 @@ CONTAINER = "short-video-maker"
 DEFAULT_MUSIC = "No.2 Remembering Her - Esther Abrami.mp3"
 TAIL = 1.0                 # seconds of picture after the last word
 SUB_Y = 1242               # fixed top of the first subtitle line: text starts 676 px above the bottom edge (frame is 1920 high)
+# Look of the video: the colour of the sung subtitle words, the outline, and an optional green colour grade of the footage plus
+# a soft dark-green band behind the subtitles ("theme" in the spec file or --theme).
+THEMES = {
+    "purple": {"sung": "&H00FF4CB4", "outline": "&H00000000", "grade": None},
+    "green": {"sung": "&H00A8F08E",      # ASS is &HAABBGGRR: this is RGB #8EF0A8, a soft mint green
+              "outline": "&H00162E10",   # dark forest green outline
+              "grade": ("colorbalance=rs=-0.09:gs=0.14:bs=-0.07:rm=-0.07:gm=0.10:bm=-0.06:rh=-0.04:gh=0.06:bh=-0.04,"
+                        "eq=brightness=-0.03:saturation=1.05," + ",".join(
+                            f"drawbox=x=0:y={y}:w=1080:h={h}:color=0x0B2E1F@{al}:t=fill" for y, h, al in
+                            [(1150, 40, 0.10), (1190, 40, 0.22), (1230, 40, 0.34), (1270, 260, 0.45),
+                             (1530, 40, 0.34), (1570, 40, 0.22), (1610, 40, 0.10)]))},
+}
 KOKORO_WORDS_PER_SEC = 2.57
 FILLER = ("breathe slowly and enjoy this quiet moment of life while time keeps moving gently "
           "forward and everything finds its place").split()
@@ -205,7 +218,11 @@ def render_scene_picture(i, sc, target, workdir, reuse=False):
                            "orientation": "portrait", "paddingBack": 0, "music": "chill"}}
         vid = http_json(f"{API}/api/short-video", body)["videoId"]
         for _ in range(180):
-            st = http_json(f"{API}/api/short-video/{vid}/status")["status"]
+            try:
+                st = http_json(f"{API}/api/short-video/{vid}/status")["status"]
+            except (TimeoutError, urllib.error.URLError):   # the server answers slowly while it renders; ask again
+                time.sleep(5)
+                continue
             if st == "ready":
                 break
             if st == "failed":
@@ -230,7 +247,11 @@ def ts(t):
     return f"{int(t // 3600)}:{int(t % 3600 // 60):02d}:{t % 60:05.2f}"
 
 
-def build_ass(sents, starts, path):
+CREDIT_Y = 1425            # top of the optional credit line, just under the subtitle block
+
+
+def build_ass(sents, starts, path, theme="purple", credit=None, total=None):
+    th = THEMES[theme]
     events = []
     for i, ss in enumerate(sents):
         for s in ss:
@@ -255,13 +276,18 @@ def build_ass(sents, starts, path):
         "[V4+ Styles]\nFormat: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, "
         "Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, "
         "Alignment, MarginL, MarginR, MarginV, Encoding\n"
-        # purple (sung) / white (not yet sung), black outline, top-anchored so the first line never moves
-        "Style: Default,Arial,56,&H00FF4CB4,&H00FFFFFF,&H00000000,&H80000000,-1,0,0,0,100,100,0,0,1,5,1,8,60,60,0,1\n\n"
+        # theme colour (sung) / white (not yet sung), outline, top-anchored so the first line never moves
+        f"Style: Default,Arial,56,{th['sung']},&H00FFFFFF,{th['outline']},&H80000000,-1,0,0,0,100,100,0,0,1,5,1,8,60,60,0,1\n"
+        f"Style: Credit,Arial,28,&H00E6F5E6,&H00E6F5E6,{th['outline']},&H80000000,0,0,0,0,100,100,0,0,1,3,0,8,40,40,0,1\n\n"
         "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n")
     with open(path, "w", encoding="utf-8") as f:
         f.write(header)
         for a, b, txt in events:
             f.write("Dialogue: 0,%s,%s,Default,,0,0,0,,{\\an8\\pos(540,%d)}%s\n" % (ts(a), ts(b), SUB_Y, txt))
+        if credit:                                         # source line under the subtitles, shown for the whole video
+            end = total if total else events[-1][1] + 1
+            f.write("Dialogue: 0,%s,%s,Credit,,0,0,0,,{\\an8\\pos(540,%d)}%s\n" % (
+                ts(0), ts(end), CREDIT_Y, credit.replace("{", "(").replace("}", ")")))
     return events
 
 
@@ -273,6 +299,7 @@ def main():
     ap.add_argument("--genre", default=None, help="tranh-luan (default), info, tam-su, goc-nhin, nhan-dinh or news; picks the speaking pace and music")
     ap.add_argument("--audience", default=None,
                     help="tre or trung-nien (accents optional: trẻ, trung_niên); picks the voice age and music")
+    ap.add_argument("--theme", default=None, choices=sorted(THEMES), help="purple (default) or green: subtitle colour + green colour grade")
     ap.add_argument("--dry-run", action="store_true", help="print the settings that would be used and stop")
     ap.add_argument("--mode", "--modes", dest="modes", default="voice",
                     help="voice (default), music, or both; a comma list such as music,voice also works")
@@ -299,7 +326,10 @@ def main():
     cfg = voices.resolve(prof["voice"])
     spec["voice_cfg"], spec["voice"] = cfg, cfg["key"]
     spec["rate"], spec["music"] = f"{prof['rate']:+d}%", prof["music"]
-    log(f"profile: genre={prof['genre']} audience={prof['audience']} voice={cfg['key']} rate={spec['rate']} "
+    theme = a.theme or spec.get("theme") or "purple"
+    if theme not in THEMES:
+        sys.exit(f"unknown theme {theme!r}; choose one of {', '.join(sorted(THEMES))}")
+    log(f"profile: theme={theme} genre={prof['genre']} audience={prof['audience']} voice={cfg['key']} rate={spec['rate']} "
         f"music={spec['music']} (expected {prof['seconds'][0]}-{prof['seconds'][1]} s, about {prof['words'][0]}-{prof['words'][1]} words)")
     if a.dry_run:
         return
@@ -345,7 +375,7 @@ def main():
 
     log("3/4 karaoke subtitles")
     rel_ass = f"work/{slug}/subs.ass"
-    events = build_ass(sents, starts, ROOT / rel_ass)
+    events = build_ass(sents, starts, ROOT / rel_ass, theme, spec.get("credit"), total)
     log(f"  {len(events)} subtitle events")
 
     log("4/4 mixing and burning subtitles")
@@ -364,7 +394,9 @@ def main():
         else:
             sys.exit(f"unknown mode: {mode}")
         out = outdir / (f"{slug}-voice{voices.file_suffix(cfg)}.mp4" if mode == "voice" else f"{slug}-{mode}.mp4")
-        ff(*inputs, "-filter_complex", f"[0:v]{compat.ass_filter(rel_ass)}[vv];" + fc,
+        grade = THEMES[theme]["grade"]
+        vchain = f"[0:v]{grade + ',' if grade else ''}{compat.ass_filter(rel_ass)}[vv];"
+        ff(*inputs, "-filter_complex", vchain + fc,
            "-map", "[vv]", "-map", "[a]", "-t", f"{total:.3f}", "-c:v", "libx264", "-crf", 23, "-preset", "fast",
            "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", out)
         outputs.append(out)
@@ -378,7 +410,8 @@ def main():
         log(f"done: {out.relative_to(ROOT)}  {info}  {probe_duration(out):.1f}s  {mb:.1f} MB{note}")
         if mb > 29:  # keep a smaller copy for chat/phone delivery (30 MB limit)
             small = out.with_name(out.stem + "-share.mp4")
-            ff("-i", out, "-c:v", "libx264", "-b:v", "3M", "-maxrate", "3.5M", "-bufsize", "6M", "-preset", "medium",
+            vb = min(3_000_000, max(400_000, int(26 * 8 * 1048576 / probe_duration(out)) - 128_000))   # aim for about 26 MB
+            ff("-i", out, "-c:v", "libx264", "-b:v", vb, "-maxrate", int(vb * 1.15), "-bufsize", vb * 2, "-preset", "medium",
                "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", small)
             log(f"      share copy: {small.relative_to(ROOT)}  {small.stat().st_size / 1048576:.1f} MB")
     for k, ev in enumerate((events[1], events[len(events) // 2], events[-2])):

@@ -18,8 +18,11 @@ Layout, 1080x1920
 script.json
   {"title": "footer headline (the article's headline, shortened only if it is too long)",
    "source": "VnExpress", "audience": "tre" | "trung-nien" (optional), "genre": "news" (optional),
-   "scenes": [{"vi": "narration", "visual": "article" | "stock", "terms": ["english stock term", "..."]}]}
-Scenes marked "article" show the screenshot scrolling down; "stock" scenes need 3 English search terms.
+   "scenes": [{"vi": "narration", "visual": "article" | "stock" | "chart", "terms": ["english stock term", "..."],
+               "image": "charts/chart1.png", "label": "Biểu đồ: Goldman Sachs"}]}
+Scenes marked "article" show the screenshot scrolling down; "stock" scenes need 3 English search terms; "chart" scenes show
+a picture that `fetch` saved from inside the article (charts/chartN.png, listed in charts.json) fitted in the frame with a slow
+zoom, tagged "Biểu đồ" (or "label"). If the article has charts they are always used: one "chart" scene per chart.
 """
 import argparse, asyncio, json, re, subprocess, sys, textwrap, time
 import compat
@@ -62,6 +65,7 @@ HIDE_FIXED = """() => {
   });
   document.documentElement.style.overflow = 'visible';
 }"""
+EXPAND = ["Story Continues", "Continue reading", "Continue Reading", "Read the full story", "Show more", "Xem thêm", "Đọc tiếp", "Xem toàn bộ bài"]
 CONSENT = ["Đồng ý", "Chấp nhận", "Chấp nhận tất cả", "Tôi đồng ý", "Accept all", "Accept", "I agree", "Allow all", "Đóng", "Close"]
 
 
@@ -99,13 +103,14 @@ def squeeze_blank(src, dst, min_run=300, keep=40):
             if y - start >= min_run and start > 0:
                 runs.append((start, y))
             start = None
-    if not runs:
+    tail = start + keep if (start is not None and start > 0 and len(blank) - start >= min_run) else None   # blank all the way to the bottom
+    if not runs and tail is None:
         return src
     parts, pos = [], 0
     for y0, y1 in runs:
         parts.append(im.crop((0, pos, im.width, y0 + keep)))
         pos = y1 - keep
-    parts.append(im.crop((0, pos, im.width, im.height)))
+    parts.append(im.crop((0, pos, im.width, tail if tail is not None and tail > pos else im.height)))
     out = Image.new("RGB", (im.width, sum(p.height for p in parts)), "white")
     y = 0
     for p in parts:
@@ -113,6 +118,108 @@ def squeeze_blank(src, dst, min_run=300, keep=40):
         y += p.height
     out.save(dst)
     return dst
+
+
+# Images and chart embeds that sit inside the article body: found between the first and the last paragraph of the extracted text
+# (so the lead photo, ads, "related stories" and the next stories of an endless-scroll page are left out).
+GRAB_JS = r"""(articleText) => {
+  const clean = s => s.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+  const body = clean(articleText);
+  const ps = [...document.querySelectorAll('p')].filter(p => {
+    const t = clean(p.innerText || '');
+    return t.length > 60 && body.includes(t.slice(0, 50));
+  });
+  if (!ps.length) return [];
+  // endless-scroll pages append more stories (sometimes quoting the same sentences): keep only the first run of paragraphs,
+  // i.e. stop at the first jump of more than 3500 px between two matching paragraphs
+  const pos = ps.map(p => ({t: p.getBoundingClientRect().top + scrollY, b: p.getBoundingClientRect().bottom + scrollY}))
+                .sort((x, y) => x.t - y.t);
+  let top = pos[0].t, bottom = pos[0].b;
+  for (const q of pos.slice(1)) {
+    if (q.t - bottom > 3500) break;
+    bottom = Math.max(bottom, q.b);
+  }
+  const skip = 'aside, nav, footer, [class*="related"], [class*="recirc"], [class*="newsletter"], [class*="promo"], [class*="sponsor"]';
+  const embed = /datawrapper|flourish|infogram|tableau|ourworldindata|everviz|visualisations|datawrapper\.dwcdn/i;
+  const found = [];
+  document.querySelectorAll('img, iframe').forEach(e => {
+    const r = e.getBoundingClientRect();
+    const y = r.top + scrollY;
+    if (r.width < 260 || r.height < 120 || y < top - 5 || y > bottom + 120 || e.closest(skip)) return;
+    const ratio = r.width / r.height;
+    if (ratio > 4.5 || ratio < 0.25) return;
+    const src = e.tagName === 'IMG' ? (e.currentSrc || e.src || '') : (e.src || '');
+    if (e.tagName === 'IFRAME' && !embed.test(src)) return;
+    if (/avatar|logo|sprite|pixel|icon|emoji/i.test(src)) return;
+    const fig = e.closest('figure');
+    found.push({y: Math.round(y), src, tag: e.tagName, alt: e.alt || '',
+                caption: fig && fig.querySelector('figcaption') ? fig.querySelector('figcaption').innerText.trim() : ''});
+    e.setAttribute('data-nv-fig', String(found.length - 1));
+  });
+  return found;
+}"""
+
+
+def fetch_image(page, src):
+    """Download an image with the page's own session; returns an RGB PIL image or None."""
+    import io
+    from PIL import Image
+    if not src.startswith("http"):
+        return None
+    try:
+        resp = page.context.request.get(src, timeout=20000)
+        if not resp.ok:
+            return None
+        im = Image.open(io.BytesIO(resp.body()))
+        if im.mode in ("RGBA", "LA", "P"):
+            im = im.convert("RGBA")
+            bg = Image.new("RGB", im.size, "white")
+            bg.paste(im, mask=im.split()[-1])
+            im = bg
+        return im.convert("RGB")
+    except Exception:
+        return None
+
+
+def grab_charts(page, text, d, limit=8):
+    """Save the images / chart embeds inside the article body as charts/chart1.png ... (reading order) plus charts.json.
+    Claude looks at them while writing the script and uses the real charts as 'chart' scenes."""
+    import hashlib, io
+    from PIL import Image
+    cdir = d / "charts"
+    for old in list(cdir.glob("*")) if cdir.exists() else []:
+        old.unlink()
+    height = page.evaluate("document.documentElement.scrollHeight")
+    y = 0
+    while y < min(height, 16000):                         # scroll through the page so lazy images load
+        page.evaluate(f"window.scrollTo(0,{y})")
+        page.wait_for_timeout(250)
+        y += 800
+        height = page.evaluate("document.documentElement.scrollHeight")
+    page.wait_for_timeout(500)
+    cands = page.evaluate(GRAB_JS, text) or []
+    figs, seen = [], set()
+    for k, c in enumerate(cands):
+        key = hashlib.md5(c["src"].encode()).hexdigest() if c["src"] else str(k)
+        if key in seen or len(figs) >= limit:
+            continue
+        seen.add(key)
+        cdir.mkdir(exist_ok=True)
+        out = cdir / f"chart{len(figs) + 1}.png"
+        im = fetch_image(page, c["src"]) if c["tag"] == "IMG" else None
+        if im is None:                                     # embeds (Datawrapper...) and images that cannot be downloaded
+            try:
+                page.locator(f'[data-nv-fig="{k}"]').first.screenshot(path=str(out), timeout=8000)
+                im = Image.open(out).convert("RGB")
+            except Exception:
+                continue
+        if im.width < 260 or im.height < 120:
+            continue
+        im.save(out)
+        figs.append({"file": f"charts/{out.name}", "caption": c["caption"], "alt": c["alt"], "src": c["src"][:300],
+                     "width": im.width, "height": im.height})
+    (d / "charts.json").write_text(json.dumps(figs, ensure_ascii=False, indent=1), encoding="utf-8")
+    return figs
 
 
 def fetch_one(page, url, name=None):
@@ -129,6 +236,15 @@ def fetch_one(page, url, name=None):
             pass
     page.evaluate(HIDE_FIXED)
     page.wait_for_timeout(400)
+    for label in EXPAND:                                   # articles folded behind a "Story Continues" style button
+        try:
+            btn = page.get_by_role("button", name=label, exact=True).first
+            if btn.is_visible(timeout=300):
+                btn.click(timeout=1500)
+                page.wait_for_timeout(1200)
+                log(f"  opened the folded part of the article ({label})")
+        except Exception:
+            pass
     html = page.content()
     got = trafilatura.extract(html, url=url, output_format="json", with_metadata=True, include_comments=False,
                               favor_precision=True)
@@ -140,12 +256,21 @@ def fetch_one(page, url, name=None):
     d = BASE / slug
     d.mkdir(parents=True, exist_ok=True)
     full = page.evaluate("document.documentElement.scrollHeight")
-    page.screenshot(path=str(d / "screenshot.png"), full_page=True,
+    page.screenshot(path=str(d / "screenshot.png"), full_page=True, timeout=90000,
                     clip={"x": 0, "y": 0, "width": VIEW_W, "height": float(min(full, 1700))})
     cut = trim_blank_top(str(d / "screenshot.png"))
     if cut:
         log(f"  removed {cut}px of empty ad space above the article in the screenshot")
     text = (info.get("text") or "").strip()
+    try:
+        figs = grab_charts(page, text, d)
+    except Exception as e:
+        figs = []
+        log(f"  could not look for charts: {type(e).__name__}: {str(e)[:100]}")
+    if figs:
+        log(f"  {len(figs)} image(s) inside the article body saved to charts/ (charts, tables or photos; look at each one):")
+        for f in figs:
+            log(f"    {f['file']}  {f['width']}x{f['height']}  {f['caption'] or f['alt'] or '(no caption)'}"[:150])
     art = {"url": url, "title": title, "source": source, "host": host, "date": info.get("date"),
            "author": info.get("author"), "description": info.get("description"), "text": text,
            "words": len(text.split())}
@@ -213,9 +338,11 @@ def footer_events(title, source, date, total, stock_spans, lang="vi"):
         karaoke.ts(0), karaoke.ts(total), y, size, "\\N".join(lines)),
         "Dialogue: 0,%s,%s,FooterSrc,,0,0,0,,{\\an8\\pos(540,%d)}%s\n" % (
         karaoke.ts(0), karaoke.ts(total), ys, ass_text(src))]
-    for a_, b_ in stock_spans:
+    for span in stock_spans:                          # (start, end) = stock illustration, (start, end, label) = chart
+        a_, b_ = span[0], span[1]
+        label = ass_text(span[2]) if len(span) > 2 else ("Illustration" if lang == "en" else "Hình minh họa")
         ev.append("Dialogue: 0,%s,%s,Tag,,0,0,0,,{\\an7\\pos(36,%d)}%s\n" % (
-            karaoke.ts(a_), karaoke.ts(b_), CONTENT_Y + 24, "Illustration" if lang == "en" else "Hình minh họa"))
+            karaoke.ts(a_), karaoke.ts(b_), CONTENT_Y + 24, label))
     return ev
 
 
@@ -257,8 +384,26 @@ def article_clip(shot, T, y0, out, share=None):
     vf = (f"scale={W}:-2,pad={W}:'max({CONTENT_H},ih)':0:0:white,"
           f"crop={W}:{CONTENT_H}:0:'{y0:.0f}+{D:.0f}*min(1,t/{T:.2f})',fps=30,format=yuv420p")
     sv.ff("-loop", 1, "-framerate", 30, "-t", f"{T:.3f}", "-i", shot, "-vf", vf, "-c:v", "libx264", "-crf", 18,
-          "-preset", "fast", out)
+          "-preset", "fast", "-color_range", "tv", out)
     return D
+
+
+def chart_clip(img_path, T, out):
+    """Content-area clip for a chart (or any picture from the article): fitted inside the frame on white, slow zoom-in."""
+    from PIL import Image
+    im = Image.open(img_path).convert("RGB")
+    k = 2                                                  # compose at 2x so the zoom does not jitter
+    box_w, box_h = (W - 40) * k, (CONTENT_H - 90) * k
+    f = min(box_w / im.width, box_h / im.height)
+    im = im.resize((round(im.width * f), round(im.height * f)), Image.LANCZOS)
+    canvas = Image.new("RGB", (W * k, CONTENT_H * k), "white")
+    canvas.paste(im, ((W * k - im.width) // 2, (CONTENT_H * k - im.height) // 2 + 20 * k))
+    cpath = Path(out).with_suffix(".png")
+    canvas.save(cpath)
+    frames = max(2, round(T * 30))
+    vf = (f"zoompan=z='1+0.05*on/{frames}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d={frames}:s={W}x{CONTENT_H}:fps=30,"
+          f"format=yuv420p")
+    sv.ff("-i", cpath, "-vf", vf, "-t", f"{T:.3f}", "-c:v", "libx264", "-crf", 18, "-preset", "fast", "-color_range", "tv", out)
 
 
 def audio_gaps(path):
@@ -327,9 +472,21 @@ def build_one(slug, a):
     segs, stock_spans, y0 = [], [], 0.0
     art_idx = [k for k, x in enumerate(scenes) if x.get("visual", "stock") == "article"]
     shot = str(d / "screenshot.png")
-    if sc.get("shot_height") or sc.get("shot_top"):   # keep a slice of the page (drops an ad on top, or a popup / blank part below)
+    if sc.get("shot_height") or sc.get("shot_top") or sc.get("cut_bands"):   # keep a slice of the page (drops ads, popups, blank parts)
         from PIL import Image
-        im = Image.open(shot)
+        im = Image.open(shot).convert("RGB")
+        if sc.get("cut_bands"):                    # [[y0, y1], ...] in screenshot pixels: remove these bands and close the gap
+            pieces, pos = [], 0
+            for y0, y1 in sorted(sc["cut_bands"]):
+                pieces.append(im.crop((0, pos, im.width, y0)))
+                pos = y1
+            pieces.append(im.crop((0, pos, im.width, im.height)))
+            joined = Image.new("RGB", (im.width, sum(p.height for p in pieces)), "white")
+            yy = 0
+            for p_ in pieces:
+                joined.paste(p_, (0, yy))
+                yy += p_.height
+            im = joined
         top = int(sc.get("shot_top", 0))
         bottom = min(int(sc.get("shot_height", im.height)), im.height)
         im.crop((0, top, im.width, bottom)).save(d / "screenshot_crop.png")
@@ -342,10 +499,20 @@ def build_one(slug, a):
         out = d / f"c{i}.mp4"
         if s.get("visual", "stock") == "article":
             y0 += article_clip(shot, targets[i], y0, out, share=targets[i] / sum(targets[k] for k in art_idx if k >= i))
+        elif s.get("visual") == "chart":                   # a real chart or picture taken from the article (charts/chartN.png)
+            img = d / s.get("image", "")
+            if not s.get("image") or not img.is_file():
+                have = ", ".join(sorted(p_.name for p_ in (d / "charts").glob("*"))) or "none (fetch found no pictures in the article)"
+                sys.exit(f"scene {i + 1}: chart image {s.get('image')!r} not found in {d}; available in charts/: {have}")
+            chart_clip(img, targets[i], out)
+            label = s.get("label") or ("Chart" if sc.get("lang") == "en" else "Biểu đồ")
+            stock_spans.append((starts[i], starts[i] + targets[i], label))
         else:
             v = sv.render_scene_picture(i, s, targets[i], d, a.reuse_footage)
-            sv.ff("-i", v, "-vf", f"crop={W}:{CONTENT_H}:0:{(1920 - CONTENT_H) // 2},fps=30,format=yuv420p",
-                  "-c:v", "libx264", "-crf", 18, "-preset", "fast", out)
+            # stock clips can arrive tagged full-range; convert to limited range and tag it, because the clips are joined with
+            # -c copy and a stray full-range tag would be inherited by the clips after it (white chart/page turning grey)
+            sv.ff("-i", v, "-vf", f"crop={W}:{CONTENT_H}:0:{(1920 - CONTENT_H) // 2},scale=out_range=tv,fps=30,format=yuv420p",
+                  "-c:v", "libx264", "-crf", 18, "-preset", "fast", "-color_range", "tv", out)
             stock_spans.append((starts[i], starts[i] + targets[i]))
         segs.append(out)
     (d / "clist.txt").write_text("".join(f"file '{p.name}'\n" for p in segs), encoding="utf-8")

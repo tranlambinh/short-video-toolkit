@@ -271,7 +271,7 @@ details > div { padding-bottom: 12px; }
       <div class="f">Chế độ video <small>--mode</small>
         <div class="seg" id="svMode"><label><input type="radio" name="svMode" value="voice" checked>Có giọng đọc</label><label><input type="radio" name="svMode" value="music">Nhạc lớn</label><label><input type="radio" name="svMode" value="both">Cả hai</label></div></div>
       <div class="f">Giọng đọc <small>--voice</small>
-        <div class="seg" id="svVoice"><label><input type="radio" name="svVoice" value="female" checked>Nữ</label><label><input type="radio" name="svVoice" value="male">Nam</label><label><input type="radio" name="svVoice" value="piper-vais">Piper offline (nữ)</label></div></div>
+        <div class="seg" id="svVoice"><label><input type="radio" name="svVoice" value="female" checked>Nữ</label><label><input type="radio" name="svVoice" value="male">Nam</label><label><input type="radio" name="svVoice" value="vieneu-maianh">VieNeu offline (nữ)</label><label><input type="radio" name="svVoice" value="vieneu-haidang">VieNeu offline (nam)</label><label><input type="radio" name="svVoice" value="piper-vais">Piper offline (nữ)</label></div></div>
     </div>
     <div class="outs">
       <div class="codebox"><span class="label">Gõ trong Claude Code</span><pre class="code" id="svCmd"></pre><button class="copy" type="button" data-copy="svCmd">Chép</button></div>
@@ -298,11 +298,14 @@ details > div { padding-bottom: 12px; }
     <tr><td><code>female</code>, <code>male</code></td><td>edge-tts (cần internet)</td><td>giọng gốc HoaiMy (nữ), NamMinh (nam)</td></tr>
     <tr><td><code>female-young</code>, <code>male-young</code></td><td>edge-tts</td><td>trẻ trung: cao hơn, nhanh hơn, tươi sáng</td></tr>
     <tr><td><code>female-mature</code>, <code>male-mature</code></td><td>edge-tts</td><td>trung niên: trầm hơn, chậm rãi, điềm đạm</td></tr>
+    <tr><td><code>vieneu-maianh</code>, <code>vieneu-ngochuyen</code>, <code>vieneu-trucly</code>, <code>vieneu-thuydung</code></td><td>VieNeu-TTS (offline)</td><td>giọng nữ tự nhiên nhất (Mai Anh và Thùy Dung kiểu đọc tin tức; Thùy Dung giọng miền Nam)</td></tr>
+    <tr><td><code>vieneu-haidang</code>, <code>vieneu-thienminh</code>, <code>vieneu-minhtriet</code></td><td>VieNeu-TTS (offline)</td><td>giọng nam (Thiện Minh trầm, kể chuyện; Minh Triết miền Nam, tin tức)</td></tr>
+    <tr><td><code>vieneu-clone</code> · <code>"vieneu:Tên giọng"</code></td><td>VieNeu-TTS (offline)</td><td>nhân bản giọng từ file ghi âm 3-8 giây <code>assets/voices/clone.wav</code>; hoặc dùng một trong 25 giọng có sẵn theo tên (<code>python voices.py --vieneu-list</code>)</td></tr>
     <tr><td><code>piper-vais</code></td><td>Piper (offline)</td><td>giọng nữ, tốt nhất trong ba giọng Piper (Whisper nhận lại 97% câu mẫu)</td></tr>
     <tr><td><code>piper-25h</code>, <code>piper-vivos-male</code></td><td>Piper (offline)</td><td>chất lượng thấp hơn (85%); giọng nam VIVOS là thử nghiệm</td></tr>
     <tr><td>tên giọng edge-tts bất kỳ</td><td>edge-tts</td><td>ví dụ <code>en-US-AvaNeural</code> cho video tiếng Anh</td></tr>
   </table></div>
-  <p class="small muted" style="margin-top:10px">Mọi giọng đều được chỉnh cao độ, tốc độ, âm lượng theo từng câu. Nghe thử bằng <code>python voice_demo.py --check</code> (file mẫu ở <code>videos/voice-samples/</code>). Thêm hoặc chỉnh giọng ở <code>voices.json</code>.</p>
+  <p class="small muted" style="margin-top:10px">Mọi giọng đều được chỉnh cao độ, tốc độ, âm lượng theo từng câu. Giọng VieNeu chạy trên CPU, chậm hơn edge-tts (khoảng 1,5-2 giây cho mỗi giây giọng đọc, gồm cả bước Whisper canh chữ cho karaoke). Nghe thử bằng <code>python voice_demo.py --check</code> (file mẫu ở <code>videos/voice-samples/</code>). Thêm hoặc chỉnh giọng ở <code>voices.json</code>.</p>
 
   <h2 style="margin-top:28px">Prompt mẫu</h2>
   <div class="sampleList" id="svSamples"></div>
@@ -608,7 +611,7 @@ python dub_video.py render &lt;tên&gt; --dry-run   # chỉ kiểm tra bản d�
   <div class="tree">ShortVideo/
 ├─ .claude/commands/     short-video.md · edit-video.md · auto-subtitle.md
 ├─ short_video.py       dựng video từ kịch bản (lệnh /short-video)
-├─ voices.py, voices.json   thư viện giọng đọc (edge-tts và Piper offline)
+├─ voices.py, voices.json   thư viện giọng đọc (edge-tts, VieNeu và Piper offline)
 ├─ profiles.py, profiles.json   thể loại và đối tượng: giọng, nhịp, nhạc
 ├─ voice_demo.py        tạo file nghe thử cho từng giọng
 ├─ edit_video.py         chỉnh video có sẵn (lệnh /edit-video)
@@ -623,7 +626,7 @@ python dub_video.py render &lt;tên&gt; --dry-run   # chỉ kiểm tra bản d�
 ├─ videos/               thành phẩm        (&lt;slug&gt;/..., clips/ cho các short cắt từ video dài)
 ├─ work/                 file trung gian; giữ clip hình gốc raw*.mp4
 ├─ assets/music/         nhạc nền
-├─ models/               Whisper medium (1,5 GB) và giọng Piper (models/piper)
+├─ models/               Whisper medium (1,5 GB), Whisper base (canh chữ giọng VieNeu) và giọng Piper (models/piper)
 └─ patch/                bản vá ẩn phụ đề của short-video-maker (Docker cần)</div>
 
   <h2 style="margin-top:28px">Yêu cầu</h2>
@@ -767,12 +770,12 @@ python dub_video.py render &lt;tên&gt; --dry-run   # chỉ kiểm tra bản d�
     if (voice !== 'female') sflags += ' --voice ' + voice;
     if (mode !== 'voice') sflags += ' --mode ' + mode;
     $('#svScript').textContent = 'python short_video.py specs/<slug>.json' + sflags;
-    var key = voice === 'piper-vais' ? 'piper-vais' : voice + '-' + age;
+    var key = (voice === 'female' || voice === 'male') ? voice + '-' + age : voice;
     var vf = '<slug>-voice-' + key + '.mp4';
     var files = [];
     if (mode === 'voice' || mode === 'both') files.push(vf);
     if (mode === 'music' || mode === 'both') files.push('<slug>-music.mp4');
-    var who = { 'female-young': 'giọng nữ trẻ trung', 'female-mature': 'giọng nữ trung niên', 'male-young': 'giọng nam trẻ trung', 'male-mature': 'giọng nam trung niên', 'piper-vais': 'giọng Piper offline' };
+    var who = { 'female-young': 'giọng nữ trẻ trung', 'female-mature': 'giọng nữ trung niên', 'male-young': 'giọng nam trẻ trung', 'male-mature': 'giọng nam trung niên', 'piper-vais': 'giọng Piper offline', 'vieneu-maianh': 'giọng VieNeu Mai Anh (offline)', 'vieneu-haidang': 'giọng VieNeu Hải Đăng (offline)' };
     var desc = { '<slug>-music.mp4': 'nhạc lớn, không giọng đọc' }; desc[vf] = who[key] + ' + nhạc nhỏ';
     var ul = $('#svFiles'); ul.innerHTML = '';
     files.forEach(function (f) { var li = document.createElement('li'); li.innerHTML = '<code></code> ' + '<span class="muted"></span>'; li.firstChild.textContent = f; li.lastChild.textContent = '(' + desc[f] + ')'; ul.appendChild(li); });

@@ -30,7 +30,7 @@ Ví dụ:
 
    Không có dấu `:` hoặc không khớp thì cả câu là chủ đề, thể loại mặc định là `tranh-luan`.
 2. **Đối tượng** = `--trẻ` hoặc `--trung_niên` (chấp nhận `--tre`, `--trung-nien`, `--young`, `--mature`). Mặc định `--trẻ`.
-3. `--voice female|male` (mặc định `female`): chọn **giới tính** giọng đọc. Ghép với đối tượng thành giọng cụ thể: `female-young`, `female-mature`, `male-young`, `male-mature`. Ghi một khóa khác của `voices.json` (ví dụ `piper-vais`, hoặc tên giọng edge-tts như `en-US-AvaNeural`) thì dùng đúng giọng đó. Danh sách: `python short_video.py --list-voices`.
+3. `--voice female|male` (mặc định `female`): chọn **giới tính** giọng đọc. Ghép với đối tượng thành giọng cụ thể: `female-young`, `female-mature`, `male-young`, `male-mature`. Ghi một khóa khác của `voices.json` (ví dụ `vieneu-maianh`, `piper-vais`, `"vieneu:Ngọc Linh"` cho một giọng VieNeu bất kỳ, hoặc tên giọng edge-tts như `en-US-AvaNeural`) thì dùng đúng giọng đó. Danh sách: `python short_video.py --list-voices`.
 4. `--mode voice` (mặc định) = video có giọng đọc; `music` = nhạc lớn, không giọng; `both` = cả hai bản.
 
 Nếu cú pháp mơ hồ (đối tượng lạ, thể loại không rõ) thì hỏi lại một câu ngắn, đừng đoán.
@@ -118,7 +118,7 @@ Khi kịch bản đã duyệt, chạy từ thư mục dự án (chạy nền, kh
 ```
 python short_video.py specs/<slug>.json [--voice female|male] [--mode voice|music|both]
 ```
-`genre` và `audience` đã nằm trong file kịch bản; muốn đổi tạm thì thêm `--genre ... --audience ...`. Xem trước các giá trị sẽ dùng mà không dựng: thêm `--dry-run`. Script tự bật Docker nếu cần, tạo giọng đọc (edge-tts hoặc Piper offline, đọc từng câu với cao độ, tốc độ, âm lượng theo ý nghĩa), dựng hình stock từng cảnh, gắn phụ đề karaoke tím cố định vị trí và xuất vào `videos/<slug>/`:
+`genre` và `audience` đã nằm trong file kịch bản; muốn đổi tạm thì thêm `--genre ... --audience ...`. Xem trước các giá trị sẽ dùng mà không dựng: thêm `--dry-run`. Script tự bật Docker nếu cần, tạo giọng đọc (edge-tts, hoặc VieNeu / Piper offline, đọc từng câu với cao độ, tốc độ, âm lượng theo ý nghĩa), dựng hình stock từng cảnh, gắn phụ đề karaoke tím cố định vị trí và xuất vào `videos/<slug>/`:
 - `<slug>-voice-<giọng>.mp4`: giọng đọc + nhạc nhỏ, ví dụ `<slug>-voice-female-young.mp4`, `<slug>-voice-male-mature.mp4`.
 - `<slug>-music.mp4`: nhạc lớn, không giọng đọc (`--mode music` hoặc `both`).
 Muốn đổi giọng/chế độ cho video đã dựng mà không tải lại hình: thêm `--reuse-footage`.
