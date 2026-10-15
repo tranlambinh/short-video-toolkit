@@ -186,6 +186,8 @@ Quy trình (Claude dừng chờ bạn duyệt cả lô trước khi dựng):
 3. Bạn duyệt bảng các bài (tiêu đề, nguồn, độ dài, ghi chú).
 4. `python news_video.py build --all` dựng các bài đã có kịch bản và chưa có video; ra `videos/news/<slug>/<slug>.mp4` và ảnh ghép kiểm tra `work/news/<slug>/montage.png`. `python news_video.py status` cho biết bài nào đã lấy, đã có kịch bản, đã dựng.
 
+Cảnh stock ra hình lệch thì ghi `"pexels": <id clip Pexels>` vào cảnh đó trong `script.json` để dùng đúng clip bạn chọn (clip ngắn sẽ được lặp lại cho đủ độ dài cảnh); từ khóa `terms` nên ngắn và phổ biến.
+
 Lưu ý: trang bị chặn hoặc có paywall thì không lấy được nội dung đủ (script báo "nội dung ngắn"); clip stock chỉ minh họa, không phải ảnh sự kiện; luôn ghi nguồn và nên xin phép tòa soạn nếu dùng thương mại. Tóm tắt bằng lời mới, không thêm thông tin ngoài bài.
 
 ## 6. `/dub-video`: lồng tiếng Anh sang Việt hoặc Việt sang Anh

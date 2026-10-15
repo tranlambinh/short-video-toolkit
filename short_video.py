@@ -207,10 +207,35 @@ async def _tts_all(spec, workdir):
 
 
 # ---------------------------------------------------------------- picture
+def fetch_pexels_clip(video, dest):
+    """Download one chosen Pexels video (its id, or the page URL ending in the id) as a portrait mp4.
+    Used when a scene sets "pexels" because short-video-maker's own pick of a clip is not always on topic."""
+    m = re.search(r"(\d+)/?$", str(video).strip())
+    if not m:
+        sys.exit(f"'pexels' must be a Pexels video id or page URL, got {video!r}")
+    key = ""
+    for line in (ROOT / ".env").read_text(encoding="utf-8").splitlines():
+        if line.startswith("PEXELS_API_KEY="):
+            key = line.split("=", 1)[1].strip()
+    req = urllib.request.Request(f"https://api.pexels.com/videos/videos/{m.group(1)}",
+                                 headers={"Authorization": key, "User-Agent": "Mozilla/5.0"})
+    files = [f for f in json.load(urllib.request.urlopen(req, timeout=30)).get("video_files", [])
+             if f.get("file_type") == "video/mp4" and (f.get("height") or 0) > (f.get("width") or 0)]
+    if not files:
+        sys.exit(f"Pexels video {m.group(1)} has no portrait mp4 file")
+    best = min(files, key=lambda f: abs(f["width"] - 1080) + abs(f["height"] - 1920))   # closest to 1080x1920
+    req = urllib.request.Request(best["link"], headers={"User-Agent": "Mozilla/5.0"})
+    with urllib.request.urlopen(req, timeout=120) as r, open(dest, "wb") as out:
+        out.write(r.read())
+
+
 def render_scene_picture(i, sc, target, workdir, reuse=False):
-    """Render one scene's stock footage (no captions, muted) with short-video-maker, fit to `target` seconds."""
+    """Render one scene's stock footage (no captions, muted) with short-video-maker, fit to `target` seconds.
+    A scene with "pexels": <video id> uses that exact clip instead (looped if it is shorter than the scene)."""
     raw = workdir / f"raw{i}.mp4"
-    if not (reuse and raw.exists()):
+    if sc.get("pexels") and not (reuse and raw.exists()):
+        fetch_pexels_clip(sc["pexels"], raw)
+    if not sc.get("pexels") and not (reuse and raw.exists()):
         n_words = math.ceil(target * KOKORO_WORDS_PER_SEC * 1.25)  # overshoot, then trim
         filler = " ".join(FILLER[k % len(FILLER)] for k in range(n_words))
         body = {"scenes": [{"text": filler, "searchTerms": sc["terms"]}],
@@ -233,11 +258,14 @@ def render_scene_picture(i, sc, target, workdir, reuse=False):
         urllib.request.urlretrieve(f"{API}/api/short-video/{vid}", raw)
     L = probe_duration(raw) - 0.1
     vf = "scale=1080:1920,fps=30,setsar=1"
-    vf = (f"setpts={target / L:.5f}*(PTS-STARTPTS)," if target > L else "setpts=PTS-STARTPTS,") + vf
+    loop = bool(sc.get("pexels")) and target > L            # a chosen clip is looped; server clips are slowed down
+    vf = (f"setpts={target / L:.5f}*(PTS-STARTPTS)," if target > L and not loop else "setpts=PTS-STARTPTS,") + vf
     out = workdir / f"v{i}.mp4"
-    ff("-ss", "0.06", "-i", raw, "-an", "-vf", vf, "-t", f"{target:.3f}", "-c:v", "libx264", "-crf", 18,
-       "-preset", "fast", "-pix_fmt", "yuv420p", out)
-    if target > L:
+    ff(*(["-stream_loop", "-1"] if loop else []), "-ss", "0.06", "-i", raw, "-an", "-vf", vf, "-t", f"{target:.3f}",
+       "-c:v", "libx264", "-crf", 18, "-preset", "fast", "-pix_fmt", "yuv420p", out)
+    if loop:
+        log(f"  scene {i + 1}: chosen Pexels clip {L:.1f}s looped to {target:.1f}s")
+    elif target > L:
         log(f"  scene {i + 1}: stock clip {L:.1f}s < {target:.1f}s, slowed x{target / L:.2f}")
     return out
 
